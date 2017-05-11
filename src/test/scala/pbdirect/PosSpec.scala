@@ -16,12 +16,12 @@ class PosSpec extends WordSpecLike with Matchers {
     new _61{}, new _62{}, new _63{}, new _64{}, new _65{}, new _66{}, new _67{}, new _68{}, new _69{}, new _70{},
     new _80{}, new _79{}, new _78{}, new _77{}, new _76{}, new _75{}, new _74{}, new _73{}, new _72{}, new _71{},
     new _81{}, new _82{}, new _83{}, new _84{}, new _85{}, new _86{}, new _87{}, new _88{}, new _89{}, new _90{},
-    new _99{}, new _98{}, new _97{}, new _96{}, new _95{}, new _94{}, new _93{}, new _92{}, new _91{}
+    new _99{}, new _98{}, new _97{}, new _96{}, new _95{}, new _94{}, new _93{}, new _92{}, new _91{}, new _0{}
   )
 
   "Pos" should {
     "be sortable" in {
-      pos.sorted.map(_._pos) shouldBe (1 to 99)
+      pos.sorted.map(_._pos) shouldBe (0 to 99)
     }
   }
 

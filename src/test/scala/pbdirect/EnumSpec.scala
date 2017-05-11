@@ -26,7 +26,7 @@ class EnumSpec extends WordSpecLike with Matchers {
       Enum.toInt[WeekDay](Saturday)  shouldBe 6
       Enum.toInt[WeekDay](Sunday)    shouldBe 7
     }
-    "get the correct value for a position" in {
+    "get correct value for a position" in {
       Enum.fromInt[WeekDay](1) shouldBe Monday
       Enum.fromInt[WeekDay](2) shouldBe Tuesday
       Enum.fromInt[WeekDay](3) shouldBe Wednesday
