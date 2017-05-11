@@ -3,7 +3,7 @@
 [![Dependencies](https://app.updateimpact.com/badge/852442212779298816/pbdirect.svg?config=compile)](https://app.updateimpact.com/latest/852442212779298816/pbdirect)
 [![License](https://img.shields.io/:license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-#PBDirect
+# PBDirect
 
 Read/Write Scala objects directly to Protobuf with no .proto file definitions
 
@@ -68,7 +68,7 @@ message MyMessage {
 
 The field numbers correspond to the order of the fields inside the case class.
 
-### Serialization
+### Serialization
 
 You only need to call the `toPB` method on your case class. This method is implicitly added with `import pbdirect._`.
 
@@ -79,4 +79,14 @@ val message = MyMessage(
   numbers = List(1, 2, 3, 4)
 )
 val bytes = message.toPB
+```
+
+### Deserialization
+
+Deserializing bytes into a case class is also straight forward. You only need to call the `pbTo[A]` method on the byte array containing the protobuf encoded data.
+This method is added implicitly on all `Array[Byte]` by importing `pbdirect._`.
+
+```scala
+val bytes: Array[Byte] = Array[Byte](8, 123, 18, 5, 72, 101, 108, 108, 111, 24, 1, 32, 2, 40, 3, 48, 4)
+val message = bytes.pbTo[MyMessage]
 ```
