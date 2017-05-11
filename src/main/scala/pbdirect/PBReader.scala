@@ -107,6 +107,14 @@ trait PBReaderImplicits extends LowPriorityPBReaderImplicits {
       override def read(index: Int, bytes: Array[Byte]): Map[K, V] =
         reader.read(index, bytes).toMap
     }
+  implicit def enumReader[A](implicit
+    values: Enum.Values[A],
+    ordering: Ordering[A],
+    reader: PBReader[List[Int]]
+  ): PBReader[List[A]] = new PBReader[List[A]] {
+    override def read(index: Int, bytes: Array[Byte]): List[A] =
+      reader.read(index, bytes).map(i => Enum.fromInt(i))
+  }
 }
 
 object PBReader extends PBReaderImplicits
