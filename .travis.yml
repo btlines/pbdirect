@@ -1,0 +1,12 @@
+dist: trusty
+language: scala
+jdk: openjdk8
+scala:
+    - 2.12.2
+
+script:
+- sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport
+- test $TRAVIS_PULL_REQUEST = false && sbt updateImpactSubmit || true
+
+after_success:
+- bash <(curl -s https://codecov.io/bash)
