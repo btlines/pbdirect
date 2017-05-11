@@ -16,4 +16,14 @@ package object pbdirect {
       input.readByteArray()
     }
   }
+  implicit class PBReaderOps(bytes: Array[Byte]) {
+    def pbTo[A](implicit reader: PBReader[A]): A = {
+      // wraps the bytes into a protobuf single field message
+      val out = new ByteArrayOutputStream()
+      val pbOut = CodedOutputStream.newInstance(out)
+      pbOut.writeByteArray(1, bytes)
+      pbOut.flush()
+      reader.read(1, out.toByteArray)
+    }
+  }
 }

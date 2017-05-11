@@ -3,7 +3,7 @@
 [![Dependencies](https://app.updateimpact.com/badge/852442212779298816/pbdirect.svg?config=compile)](https://app.updateimpact.com/latest/852442212779298816/pbdirect)
 [![License](https://img.shields.io/:license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-#PBDirect
+# PBDirect
 
 Read/Write Scala objects directly to Protobuf with no .proto file definitions
 
@@ -68,7 +68,7 @@ message MyMessage {
 
 The field numbers correspond to the order of the fields inside the case class.
 
-### Serialization
+### Serialization
 
 You only need to call the `toPB` method on your case class. This method is implicitly added with `import pbdirect._`.
 
