@@ -80,3 +80,13 @@ val message = MyMessage(
 )
 val bytes = message.toPB
 ```
+
+### Deserialization
+
+Deserializing bytes into a case class is also straight forward. You only need to call the `pbTo[A]` method on the byte array containing the protobuf encoded data.
+This method is added implicitly on all `Array[Byte]` by importing `pbdirect._`.
+
+```scala
+val bytes: Array[Byte] = Array[Byte](8, 123, 18, 5, 72, 101, 108, 108, 111, 24, 1, 32, 2, 40, 3, 48, 4)
+val message = bytes.pbTo[MyMessage]
+```
