@@ -18,8 +18,8 @@ class PBWriterSpec extends WordSpecLike with Matchers {
     }
     "write a Long to Protobuf" in {
       case class LongMessage(value: Option[Long])
-      val message = LongMessage(Some(Int.MaxValue + 1))
-      message.toPB shouldBe Array[Byte](8, -128, -128, -128, -128, -8, -1, -1, -1, -1, 1)
+      val message = LongMessage(Some(Int.MaxValue.toLong + 1))
+      message.toPB shouldBe Array[Byte](8, -128, -128, -128, -128, 8)
     }
     "write a Float to Protobuf" in {
       case class FloatMessage(value: Option[Float])
@@ -35,6 +35,11 @@ class PBWriterSpec extends WordSpecLike with Matchers {
       case class StringMessage(value: Option[String])
       val message = StringMessage(Some("Hello"))
       message.toPB shouldBe Array[Byte](10, 5, 72, 101, 108, 108, 111)
+    }
+    "write bytes to Protobuf" in {
+      case class BytesMessage(value: Array[Byte])
+      val message = BytesMessage(Array[Byte](8, 4))
+      message.toPB shouldBe Array[Byte](10, 2, 8, 4)
     }
     "write an enum to Protobuf" in {
       sealed trait Grade extends Pos

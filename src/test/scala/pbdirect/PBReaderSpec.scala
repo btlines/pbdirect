@@ -16,8 +16,8 @@ class PBReaderSpec extends WordSpecLike with Matchers {
     }
     "read a Long from Protobuf" in {
       case class LongMessage(value: Option[Long])
-      val bytes = Array[Byte](8, -128, -128, -128, -128, -8, -1, -1, -1, -1, 1)
-      bytes.pbTo[LongMessage] shouldBe LongMessage(Some(Int.MaxValue + 1))
+      val bytes = Array[Byte](8, -128, -128, -128, -128, 8)
+      bytes.pbTo[LongMessage] shouldBe LongMessage(Some(Int.MaxValue.toLong + 1))
     }
     "read a Float from Protobuf" in {
       case class FloatMessage(value: Option[Float])
@@ -33,6 +33,11 @@ class PBReaderSpec extends WordSpecLike with Matchers {
       case class StringMessage(value: Option[String])
       val bytes = Array[Byte](10, 5, 72, 101, 108, 108, 111)
       bytes.pbTo[StringMessage] shouldBe StringMessage(Some("Hello"))
+    }
+    "read bytes from Protobuf" in {
+      case class BytesMessage(value: Option[Array[Byte]])
+      val bytes = Array[Byte](10, 5, 72, 101, 108, 108, 111)
+      bytes.pbTo[BytesMessage].value.get shouldBe Array[Byte](72, 101, 108, 108, 111)
     }
     "read an enum from Protobuf" in {
       sealed trait Grade extends Pos

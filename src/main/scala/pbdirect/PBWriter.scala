@@ -75,6 +75,10 @@ trait PBWriterImplicits extends LowPriorityPBWriterImplicits {
     override def writeTo(index: Int, value: String, out: CodedOutputStream): Unit =
       out.writeString(index, value)
   }
+  implicit object BytesWriter extends PBWriter[Array[Byte]] {
+    override def writeTo(index: Int, value: Array[Byte], out: CodedOutputStream): Unit =
+      out.writeByteArray(index, value)
+  }
   implicit def functorWriter[F[_], A](implicit functor: Functor[F], writer: PBWriter[A]): PBWriter[F[A]] =
     new PBWriter[F[A]] {
       override def writeTo(index: Int, value: F[A], out: CodedOutputStream): Unit = {
