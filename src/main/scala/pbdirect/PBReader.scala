@@ -5,10 +5,10 @@ import shapeless.{ :+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Laz
 
 import scala.util.Try
 
-private trait PBExtractor[A] {
+trait PBExtractor[A] {
   def extract(input: CodedInputStream): A
 }
-private object PBExtractor {
+object PBExtractor {
   implicit object BooleanExtractor extends PBExtractor[Boolean] {
     override def extract(input: CodedInputStream): Boolean = input.readBool()
   }
@@ -36,7 +36,28 @@ trait PBReader[A] {
   def read(index: Int, bytes: Array[Byte]): A
 }
 
-trait LowPriorityPBReaderImplicits {
+trait LowerPriorityPBReaderImplicits {
+  implicit object CNilReader extends PBReader[List[CNil]] {
+    override def read(index: Int, bytes: Array[Byte]): List[CNil] =
+      throw new UnsupportedOperationException("Can't read CNil")
+  }
+  implicit def cconsReader[H, T <: Coproduct](implicit
+                                              head: PBReader[List[H]],
+                                              tail: Lazy[PBReader[List[T]]]
+                                             ): PBReader[List[H :+: T]] = new PBReader[List[H :+: T]] {
+    override def read(index: Int, bytes: Array[Byte]): List[H :+: T] =
+      Try { head.read(index, bytes).map(Inl.apply) }  getOrElse tail.value.read(index, bytes).map(Inr.apply)
+  }
+  implicit def coprodReader[A, R <: Coproduct](implicit
+                                               gen: Generic.Aux[A, R],
+                                               parser: Lazy[PBReader[List[R]]]
+                                              ): PBReader[List[A]] = new PBReader[List[A]] {
+    override def read(index: Int, bytes: Array[Byte]): List[A] =
+      parser.value.read(index, bytes).map(gen.from)
+  }
+}
+
+trait LowPriorityPBReaderImplicits extends LowerPriorityPBReaderImplicits {
   implicit object HNilReader extends PBReader[HNil] {
     override def read(index: Int, bytes: Array[Byte]): HNil = HNil
   }
@@ -55,25 +76,18 @@ trait LowPriorityPBReaderImplicits {
     override def read(index: Int, bytes: Array[Byte]): List[A] =
       reader.read(index, bytes).map { bs => gen.from(repr.read(1, bs)) }
   }
-
-  implicit object CNilReader extends PBReader[List[CNil]] {
-    override def read(index: Int, bytes: Array[Byte]): List[CNil] =
-      throw new UnsupportedOperationException("Can't read CNil")
-  }
-  implicit def cconsReader[H, T <: Coproduct](implicit
-    head: PBReader[List[H]],
-    tail: Lazy[PBReader[List[T]]]
-  ): PBReader[List[H :+: T]] = new PBReader[List[H :+: T]] {
-    override def read(index: Int, bytes: Array[Byte]): List[H :+: T] =
-      Try { head.read(index, bytes).map(Inl.apply) }  getOrElse tail.value.read(index, bytes).map(Inr.apply)
-  }
-  implicit def coprodReader[A, R <: Coproduct](implicit
-    gen: Generic.Aux[A, R],
-    parser: Lazy[PBReader[List[R]]]
-  ): PBReader[List[A]] = new PBReader[List[A]] {
+  implicit def enumReader[A](implicit
+                             values: Enum.Values[A],
+                             ordering: Ordering[A],
+                             reader: PBReader[List[Int]]
+                            ): PBReader[List[A]] = new PBReader[List[A]] {
     override def read(index: Int, bytes: Array[Byte]): List[A] =
-      parser.value.read(index, bytes).map(gen.from)
+      reader.read(index, bytes).map(i => Enum.fromInt(i))
   }
+  implicit def requiredReader[A](implicit reader: PBReader[List[A]]): PBReader[A] =
+    new PBReader[A] {
+      override def read(index: Int, bytes: Array[Byte]): A = reader.read(index, bytes).last
+    }
 }
 
 trait PBReaderImplicits extends LowPriorityPBReaderImplicits {
@@ -98,23 +112,11 @@ trait PBReaderImplicits extends LowPriorityPBReaderImplicits {
       override def read(index: Int, bytes: Array[Byte]): Option[A] =
         reader.read(index, bytes).lastOption
     }
-  implicit def requiredReader[A](implicit reader: PBReader[List[A]]): PBReader[A] =
-    new PBReader[A] {
-      override def read(index: Int, bytes: Array[Byte]): A = reader.read(index, bytes).last
-    }
   implicit def mapReader[K, V](implicit reader: PBReader[List[(K, V)]]): PBReader[Map[K, V]] =
     new PBReader[Map[K, V]] {
       override def read(index: Int, bytes: Array[Byte]): Map[K, V] =
         reader.read(index, bytes).toMap
     }
-  implicit def enumReader[A](implicit
-    values: Enum.Values[A],
-    ordering: Ordering[A],
-    reader: PBReader[List[Int]]
-  ): PBReader[List[A]] = new PBReader[List[A]] {
-    override def read(index: Int, bytes: Array[Byte]): List[A] =
-      reader.read(index, bytes).map(i => Enum.fromInt(i))
-  }
 }
 
 object PBReader extends PBReaderImplicits
