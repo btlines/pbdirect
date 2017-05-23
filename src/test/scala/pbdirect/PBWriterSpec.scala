@@ -41,15 +41,23 @@ class PBWriterSpec extends WordSpecLike with Matchers {
       val message = BytesMessage(Array[Byte](8, 4))
       message.toPB shouldBe Array[Byte](10, 2, 8, 4)
     }
+    "write an enumeration to Protobuf" in {
+      object Grade extends Enumeration {
+        val GradeA, GradeB = Value
+      }
+      case class EnumMessage(value: Grade.Value)
+      val message = EnumMessage(Grade.GradeB)
+      message.toPB shouldBe Array[Byte](8, 1)
+    }
     "write an enum to Protobuf" in {
       sealed trait Grade extends Pos
-      case object GradeA extends Grade with Pos._1
-      case object GradeB extends Grade with Pos._2
+      case object GradeA extends Grade with Pos._0
+      case object GradeB extends Grade with Pos._1
       case class GradeMessage(value: Option[Grade])
       val messageA = GradeMessage(Some(GradeA))
       val messageB = GradeMessage(Some(GradeB))
-      messageA.toPB shouldBe Array[Byte](8, 1)
-      messageB.toPB shouldBe Array[Byte](8, 2)
+      messageA.toPB shouldBe Array[Byte](8, 0)
+      messageB.toPB shouldBe Array[Byte](8, 1)
     }
     "write a required field to Protobuf" in {
       case class RequiredMessage(value: Int)

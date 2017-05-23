@@ -18,22 +18,22 @@ class EnumSpec extends WordSpecLike with Matchers {
       Enum.values[WeekDay] shouldBe Monday :: Tuesday :: Wednesday :: Thursday :: Friday :: Saturday :: Sunday :: Nil
     }
     "get correct position for a value" in {
-      Enum.toInt[WeekDay](Monday)    shouldBe 1
-      Enum.toInt[WeekDay](Tuesday)   shouldBe 2
-      Enum.toInt[WeekDay](Wednesday) shouldBe 3
-      Enum.toInt[WeekDay](Thursday)  shouldBe 4
-      Enum.toInt[WeekDay](Friday)    shouldBe 5
-      Enum.toInt[WeekDay](Saturday)  shouldBe 6
-      Enum.toInt[WeekDay](Sunday)    shouldBe 7
+      Enum.toInt[WeekDay](Monday)    shouldBe 0
+      Enum.toInt[WeekDay](Tuesday)   shouldBe 1
+      Enum.toInt[WeekDay](Wednesday) shouldBe 2
+      Enum.toInt[WeekDay](Thursday)  shouldBe 3
+      Enum.toInt[WeekDay](Friday)    shouldBe 4
+      Enum.toInt[WeekDay](Saturday)  shouldBe 5
+      Enum.toInt[WeekDay](Sunday)    shouldBe 6
     }
     "get correct value for a position" in {
-      Enum.fromInt[WeekDay](1) shouldBe Monday
-      Enum.fromInt[WeekDay](2) shouldBe Tuesday
-      Enum.fromInt[WeekDay](3) shouldBe Wednesday
-      Enum.fromInt[WeekDay](4) shouldBe Thursday
-      Enum.fromInt[WeekDay](5) shouldBe Friday
-      Enum.fromInt[WeekDay](6) shouldBe Saturday
-      Enum.fromInt[WeekDay](7) shouldBe Sunday
+      Enum.fromInt[WeekDay](0) shouldBe Monday
+      Enum.fromInt[WeekDay](1) shouldBe Tuesday
+      Enum.fromInt[WeekDay](2) shouldBe Wednesday
+      Enum.fromInt[WeekDay](3) shouldBe Thursday
+      Enum.fromInt[WeekDay](4) shouldBe Friday
+      Enum.fromInt[WeekDay](5) shouldBe Saturday
+      Enum.fromInt[WeekDay](6) shouldBe Sunday
     }
   }
 }

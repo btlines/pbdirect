@@ -96,6 +96,11 @@ trait PBWriterImplicits extends LowPriorityPBWriterImplicits {
       override def writeTo(index: Int, value: E, out: CodedOutputStream): Unit =
         out.writeInt32(index, Enum.toInt(value))
     }
+  implicit def enumerationWriter[E <: Enumeration#Value]: PBWriter[E] =
+    new PBWriter[E] {
+      override def writeTo(index: Int, value: E, out: CodedOutputStream): Unit =
+        out.writeInt32(index, value.id)
+    }
 }
 
 object PBWriter extends PBWriterImplicits
