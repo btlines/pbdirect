@@ -39,13 +39,23 @@ class PBReaderSpec extends WordSpecLike with Matchers {
       val bytes = Array[Byte](10, 5, 72, 101, 108, 108, 111)
       bytes.pbTo[BytesMessage].value.get shouldBe Array[Byte](72, 101, 108, 108, 111)
     }
+    "read an enumeration from Protobuf" in {
+      case object Grade extends Enumeration {
+        val GradeA, GradeB = Value
+      }
+      val bytesA = Array[Byte](8, 0)
+      val bytesB = Array[Byte](8, 1)
+      case class GradeMessage(value: Option[Grade.Value])
+      bytesA.pbTo[GradeMessage] shouldBe GradeMessage(Some(Grade.GradeA))
+      bytesB.pbTo[GradeMessage] shouldBe GradeMessage(Some(Grade.GradeB))
+    }
     "read an enum from Protobuf" in {
       sealed trait Grade extends Pos
-      case object GradeA extends Grade with Pos._1
-      case object GradeB extends Grade with Pos._2
+      case object GradeA extends Grade with Pos._0
+      case object GradeB extends Grade with Pos._1
       case class GradeMessage(value: Option[Grade])
-      val bytesA = Array[Byte](8, 1)
-      val bytesB = Array[Byte](8, 2)
+      val bytesA = Array[Byte](8, 0)
+      val bytesB = Array[Byte](8, 1)
       bytesA.pbTo[GradeMessage] shouldBe GradeMessage(Some(GradeA))
       bytesB.pbTo[GradeMessage] shouldBe GradeMessage(Some(GradeB))
     }

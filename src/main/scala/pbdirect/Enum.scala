@@ -4,8 +4,8 @@ import shapeless.{ :+:, CNil, Coproduct, Generic, Witness }
 
 object Enum {
   def values[T](implicit v: Values[T], ord: Ordering[T]): Seq[T] = v.apply.sorted
-  def fromInt[T](index: Int)(implicit v: Values[T], ord: Ordering[T]): T = values.apply(index - 1)
-  def toInt[T](a: T)(implicit v: Values[T], ord: Ordering[T]): Int = values.indexOf(a) + 1
+  def fromInt[T](index: Int)(implicit v: Values[T], ord: Ordering[T]): T = values.apply(index)
+  def toInt[T](a: T)(implicit v: Values[T], ord: Ordering[T]): Int = values.indexOf(a)
 
   trait Values[T] {
     def apply: List[T]

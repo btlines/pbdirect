@@ -77,12 +77,22 @@ trait LowPriorityPBReaderImplicits extends LowerPriorityPBReaderImplicits {
       reader.read(index, bytes).map { bs => gen.from(repr.read(1, bs)) }
   }
   implicit def enumReader[A](implicit
-                             values: Enum.Values[A],
-                             ordering: Ordering[A],
-                             reader: PBReader[List[Int]]
-                            ): PBReader[List[A]] = new PBReader[List[A]] {
+    values: Enum.Values[A],
+    ordering: Ordering[A],
+    reader: PBReader[List[Int]]
+  ): PBReader[List[A]] = new PBReader[List[A]] {
     override def read(index: Int, bytes: Array[Byte]): List[A] =
       reader.read(index, bytes).map(i => Enum.fromInt(i))
+  }
+  implicit def enumerationReader[E <: Enumeration](implicit
+    reader: PBReader[List[Int]],
+    gen: Generic.Aux[E, HNil]
+  ): PBReader[List[E#Value]] =
+  new PBReader[scala.List[E#Value]] {
+    override def read(index: Int, bytes: Array[Byte]): List[E#Value] = {
+      val enum = gen.from(HNil)
+      reader.read(index, bytes).map(enum.apply)
+    }
   }
   implicit def requiredReader[A](implicit reader: PBReader[List[A]]): PBReader[A] =
     new PBReader[A] {
