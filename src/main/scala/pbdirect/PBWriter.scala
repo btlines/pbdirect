@@ -11,42 +11,40 @@ trait PBWriter[A] {
 }
 
 trait LowPriorityPBWriterImplicits {
+  def instance[A](f: (Int, A, CodedOutputStream) => Unit): PBWriter[A] =
+    new PBWriter[A] {
+      override def writeTo(index: Int, value: A, out: CodedOutputStream): Unit = f(index, value, out)
+    }
   implicit object HNilWriter extends PBWriter[HNil] {
     override def writeTo(index: Int, value: HNil, out: CodedOutputStream): Unit = ()
   }
   implicit def consWriter[H, T <: HList](implicit head: PBWriter[H], tail: Lazy[PBWriter[T]]): PBWriter[H :: T] =
-    new PBWriter[H :: T] {
-      override def writeTo(index: Int, value: H :: T, out: CodedOutputStream): Unit = {
-        head.writeTo(index, value.head, out)
-        tail.value.writeTo(index + 1, value.tail, out)
-      }
+    instance { (index: Int, value: H :: T, out: CodedOutputStream) =>
+      head.writeTo(index, value.head, out)
+      tail.value.writeTo(index + 1, value.tail, out)
     }
   implicit def prodWriter[A, R <: HList](implicit gen: Generic.Aux[A, R], writer: PBWriter[R]): PBWriter[A] =
-    new PBWriter[A] {
-      override def writeTo(index: Int, value: A, out: CodedOutputStream): Unit = {
-        val buffer = new ByteArrayOutputStream()
-        val pbOut = CodedOutputStream.newInstance(buffer)
-        writer.writeTo(1, gen.to(value), pbOut)
-        pbOut.flush()
-        out.writeByteArray(index, buffer.toByteArray)
-      }
+    instance { (index: Int, value: A, out: CodedOutputStream) =>
+      val buffer = new ByteArrayOutputStream()
+      val pbOut = CodedOutputStream.newInstance(buffer)
+      writer.writeTo(1, gen.to(value), pbOut)
+      pbOut.flush()
+      out.writeByteArray(index, buffer.toByteArray)
     }
 
   implicit object CNilWriter extends PBWriter[CNil] {
     override def writeTo(index: Int, value: CNil, out: CodedOutputStream): Unit = ()
   }
   implicit def cconsWriter[H, T <: Coproduct](implicit head: PBWriter[H], tail: PBWriter[T]): PBWriter[H :+: T] =
-    new PBWriter[H :+: T] {
-      override def writeTo(index: Int, value: H :+: T, out: CodedOutputStream): Unit =
-        value match {
-          case Inl(h) => head.writeTo(index, h, out)
-          case Inr(t) => tail.writeTo(index, t, out)
-        }
+    instance { (index: Int, value: H :+: T, out: CodedOutputStream) =>
+      value match {
+        case Inl(h) => head.writeTo(index, h, out)
+        case Inr(t) => tail.writeTo(index, t, out)
+      }
     }
   implicit def coprodWriter[A, R <: Coproduct](implicit gen: Generic.Aux[A, R], writer: PBWriter[R]): PBWriter[A] =
-    new PBWriter[A] {
-      override def writeTo(index: Int, value: A, out: CodedOutputStream): Unit =
-        writer.writeTo(index, gen.to(value), out)
+    instance { (index: Int, value: A, out: CodedOutputStream) =>
+      writer.writeTo(index, gen.to(value), out)
     }
 }
 
@@ -80,26 +78,21 @@ trait PBWriterImplicits extends LowPriorityPBWriterImplicits {
       out.writeByteArray(index, value)
   }
   implicit def functorWriter[F[_], A](implicit functor: Functor[F], writer: PBWriter[A]): PBWriter[F[A]] =
-    new PBWriter[F[A]] {
-      override def writeTo(index: Int, value: F[A], out: CodedOutputStream): Unit = {
-        functor.map(value) { v => writer.writeTo(index, v, out) }
-        ()
-      }
+    instance { (index: Int, value: F[A], out: CodedOutputStream) =>
+      functor.map(value) { v => writer.writeTo(index, v, out) }
+      ()
     }
   implicit def mapWriter[K, V](implicit writer: PBWriter[List[(K, V)]]): PBWriter[Map[K, V]] =
-    new PBWriter[Map[K, V]] {
-      override def writeTo(index: Int, value: Map[K, V], out: CodedOutputStream) =
-        writer.writeTo(index, value.toList, out)
+    instance { (index: Int, value: Map[K, V], out: CodedOutputStream) =>
+      writer.writeTo(index, value.toList, out)
     }
   implicit def enumWriter[E](implicit values: Enum.Values[E], ordering: Ordering[E]): PBWriter[E] =
-    new PBWriter[E] {
-      override def writeTo(index: Int, value: E, out: CodedOutputStream): Unit =
-        out.writeInt32(index, Enum.toInt(value))
+    instance { (index: Int, value: E, out: CodedOutputStream) =>
+      out.writeInt32(index, Enum.toInt(value))
     }
   implicit def enumerationWriter[E <: Enumeration#Value]: PBWriter[E] =
-    new PBWriter[E] {
-      override def writeTo(index: Int, value: E, out: CodedOutputStream): Unit =
-        out.writeInt32(index, value.id)
+    instance { (index: Int, value: E, out: CodedOutputStream) =>
+      out.writeInt32(index, value.id)
     }
 }
 
