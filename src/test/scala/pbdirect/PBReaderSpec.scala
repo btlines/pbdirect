@@ -104,5 +104,14 @@ class PBReaderSpec extends WordSpecLike with Matchers {
       intBytes.pbTo[Message] shouldBe IntMessage(Some(5))
       stringBytes.pbTo[Message] shouldBe StringMessage(Some("Hello"))
     }
+    "read a message with repeated nested message from Protobuf" in {
+      case class Metric(name: String, service: String, node: String, value: Float, count: Int)
+      case class Metrics(metrics: List[Metric])
+      val message = Metrics(
+        Metric("metric", "microservices", "node", 12F, 12345) :: Nil
+      )
+      val bytes = Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114, 111, 115, 101, 114, 118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40, -71, 96)
+      bytes.pbTo[Metrics] shouldBe message
+    }
   }
 }

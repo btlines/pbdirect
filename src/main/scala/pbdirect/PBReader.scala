@@ -71,10 +71,10 @@ trait LowPriorityPBReaderImplicits extends LowerPriorityPBReaderImplicits {
   }
   implicit def prodReader[A, R <: HList](implicit
     gen: Generic.Aux[A, R],
-    repr: PBReader[R],
+    repr: Lazy[PBReader[R]],
     reader: PBReader[List[Array[Byte]]]
   ): PBReader[List[A]] = instance { (index: Int, bytes: Array[Byte]) =>
-    reader.read(index, bytes).map { bs => gen.from(repr.read(1, bs)) }
+    reader.read(index, bytes).map { bs => gen.from(repr.value.read(1, bs)) }
   }
   implicit def enumReader[A](implicit
     values: Enum.Values[A],

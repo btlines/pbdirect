@@ -23,11 +23,11 @@ trait LowPriorityPBWriterImplicits {
       head.writeTo(index, value.head, out)
       tail.value.writeTo(index + 1, value.tail, out)
     }
-  implicit def prodWriter[A, R <: HList](implicit gen: Generic.Aux[A, R], writer: PBWriter[R]): PBWriter[A] =
+  implicit def prodWriter[A, R <: HList](implicit gen: Generic.Aux[A, R], writer: Lazy[PBWriter[R]]): PBWriter[A] =
     instance { (index: Int, value: A, out: CodedOutputStream) =>
       val buffer = new ByteArrayOutputStream()
       val pbOut = CodedOutputStream.newInstance(buffer)
-      writer.writeTo(1, gen.to(value), pbOut)
+      writer.value.writeTo(1, gen.to(value), pbOut)
       pbOut.flush()
       out.writeByteArray(index, buffer.toByteArray)
     }
