@@ -104,5 +104,13 @@ class PBWriterSpec extends WordSpecLike with Matchers {
       intMessage.toPB shouldBe Array[Byte](8, 5)
       stringMessage.toPB shouldBe Array[Byte](10, 5, 72, 101, 108, 108, 111)
     }
+    "write a message with repeated nested message in Protobuf" in {
+      case class Metric(metric: String, microservice: String, node: String, value: Float, count: Int)
+      case class Metrics(metrics: List[Metric])
+      val message = Metrics(
+        Metric("metric", "microservices", "node", 12F, 12345) :: Nil
+      )
+      message.toPB shouldBe Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114, 111, 115, 101, 114, 118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40, -71, 96)
+    }
   }
 }
