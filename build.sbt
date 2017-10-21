@@ -1,6 +1,6 @@
 name := "pbdirect"
 
-version := "0.0.3"
+version := "0.0.4"
 
 scalaVersion := "2.12.2"
 
@@ -20,3 +20,4 @@ licenses := ("MIT", url("http://opensource.org/licenses/MIT")) :: Nil
 bintrayOrganization := Some("beyondthelines")
 
 bintrayPackageLabels := Seq("scala", "protobuf")
+
