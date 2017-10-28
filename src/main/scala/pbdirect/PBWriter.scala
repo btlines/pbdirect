@@ -1,10 +1,12 @@
 package pbdirect
 
 import java.io.ByteArrayOutputStream
-
+import java.util.Date
+import scala.language.higherKinds
 import cats.Functor
 import com.google.protobuf.CodedOutputStream
 import shapeless.{ :+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Lazy }
+import scala.collection.mutable.WrappedArray
 
 trait PBWriter[A] {
   def writeTo(index: Int, value: A, out: CodedOutputStream): Unit
@@ -76,6 +78,18 @@ trait PBWriterImplicits extends LowPriorityPBWriterImplicits {
   implicit object BytesWriter extends PBWriter[Array[Byte]] {
     override def writeTo(index: Int, value: Array[Byte], out: CodedOutputStream): Unit =
       out.writeByteArray(index, value)
+  }
+  implicit object DateWriter extends PBWriter[Date] {
+    override def writeTo(index: Int, value: Date, out: CodedOutputStream): Unit = {
+      val longType = value.getTime
+      out.writeInt64(index, longType)
+    }
+  }
+  implicit object WrappedBytesWriter extends PBWriter[WrappedArray[Byte]] {
+    override def writeTo(index: Int, value: WrappedArray[Byte], out: CodedOutputStream): Unit = {
+      val wrappedArray: Array[Byte] = value.toArray[Byte]
+      out.writeByteArray(index, wrappedArray)
+    }
   }
   implicit def functorWriter[F[_], A](implicit functor: Functor[F], writer: PBWriter[A]): PBWriter[F[A]] =
     instance { (index: Int, value: F[A], out: CodedOutputStream) =>
