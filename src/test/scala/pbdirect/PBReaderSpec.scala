@@ -1,6 +1,10 @@
 package pbdirect
 
+import java.util.Date
+
 import org.scalatest.{ Matchers, WordSpecLike }
+
+import scala.collection.mutable.WrappedArray
 
 class PBReaderSpec extends WordSpecLike with Matchers {
   "PBReader" should {
@@ -38,6 +42,16 @@ class PBReaderSpec extends WordSpecLike with Matchers {
       case class BytesMessage(value: Option[Array[Byte]])
       val bytes = Array[Byte](10, 5, 72, 101, 108, 108, 111)
       bytes.pbTo[BytesMessage].value.get shouldBe Array[Byte](72, 101, 108, 108, 111)
+    }
+    "read a Date from Protobuf" in {
+      case class DateMessage(value: Option[Date])
+      val bytes = Array[Byte](8, -128, -128, -128, -128, 8)
+      bytes.pbTo[DateMessage] shouldBe DateMessage(Some(new Date(Int.MaxValue.toLong + 1)))
+    }
+    "read a Wrappedarraybytes from Protobuf" in {
+      case class WrappedArrayMessage(value: Option[WrappedArray[Byte]])
+      val bytes = Array[Byte](10, 1, 8)
+      bytes.pbTo[WrappedArrayMessage].value.get shouldBe Array(8)
     }
     "read an enumeration from Protobuf" in {
       case object Grade extends Enumeration {

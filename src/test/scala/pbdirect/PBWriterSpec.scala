@@ -1,8 +1,12 @@
 package pbdirect
 
+import java.util.Date
+
 import cats.instances.option._
 import cats.instances.list._
 import org.scalatest.{ Matchers, WordSpecLike }
+
+import scala.collection.mutable.WrappedArray
 
 class PBWriterSpec extends WordSpecLike with Matchers {
   "PBWriter" should {
@@ -40,6 +44,16 @@ class PBWriterSpec extends WordSpecLike with Matchers {
       case class BytesMessage(value: Array[Byte])
       val message = BytesMessage(Array[Byte](8, 4))
       message.toPB shouldBe Array[Byte](10, 2, 8, 4)
+    }
+    "write a Date to Protobuf" in {
+      case class DateMessage(value: Option[Date])
+      val message = DateMessage(Some(new Date(Int.MaxValue.toLong + 1)))
+      message.toPB shouldBe Array[Byte](8, -128, -128, -128, -128, 8)
+    }
+    "write a WrappedArrayBytes to Protobuf" in {
+      case class WrappedArrayMessage(value: WrappedArray[Byte])
+      val message = WrappedArrayMessage(Array(8.toByte))
+      message.toPB shouldBe Array[Byte](10, 1, 8)
     }
     "write an enumeration to Protobuf" in {
       object Grade extends Enumeration {

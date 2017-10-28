@@ -1,8 +1,11 @@
 package pbdirect
 
+import java.util.Date
+
 import com.google.protobuf.CodedInputStream
 import shapeless.{ :+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Lazy }
 
+import scala.collection.mutable.WrappedArray
 import scala.util.Try
 
 trait PBExtractor[A] {
@@ -29,6 +32,12 @@ object PBExtractor {
   }
   implicit object BytesExtractor extends PBExtractor[Array[Byte]] {
     override def extract(input: CodedInputStream): Array[Byte] = input.readByteArray()
+  }
+  implicit object DateExtractor extends PBExtractor[Date] {
+    override def extract(input: CodedInputStream): Date = new Date(input.readInt64())
+  }
+  implicit object WrappedBytesExtractor extends PBExtractor[WrappedArray[Byte]] {
+    override def extract(input: CodedInputStream): WrappedArray[Byte] = input.readByteArray()
   }
 }
 
