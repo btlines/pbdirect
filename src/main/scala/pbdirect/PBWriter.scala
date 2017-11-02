@@ -3,8 +3,9 @@ package pbdirect
 import java.io.ByteArrayOutputStream
 
 import cats.Functor
+import cats.functor.Contravariant
 import com.google.protobuf.CodedOutputStream
-import shapeless.{ :+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Lazy }
+import shapeless.{:+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Lazy}
 
 trait PBWriter[A] {
   def writeTo(index: Int, value: A, out: CodedOutputStream): Unit
@@ -94,6 +95,15 @@ trait PBWriterImplicits extends LowPriorityPBWriterImplicits {
     instance { (index: Int, value: E, out: CodedOutputStream) =>
       out.writeInt32(index, value.id)
     }
+
+  implicit object ContravariantWriter extends Contravariant[PBWriter] {
+    override def contramap[A, B](writer: PBWriter[A])(f: B => A) =
+      instance { (index: Int, b: B, out: CodedOutputStream) =>
+        writer.writeTo(index, f(b), out)
+      }
+  }
 }
 
-object PBWriter extends PBWriterImplicits
+object PBWriter extends PBWriterImplicits {
+  def apply[A : PBWriter]: PBWriter[A] = implicitly
+}

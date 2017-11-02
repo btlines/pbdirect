@@ -1,7 +1,8 @@
 package pbdirect
 
+import cats.Functor
 import com.google.protobuf.CodedInputStream
-import shapeless.{ :+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Lazy }
+import shapeless.{:+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Lazy}
 
 import scala.util.Try
 
@@ -119,6 +120,15 @@ trait PBReaderImplicits extends LowPriorityPBReaderImplicits {
     instance { (index: Int, bytes: Array[Byte]) =>
       reader.read(index, bytes).toMap
     }
+
+  implicit object FunctorReader extends Functor[PBReader] {
+    override def map[A, B](reader: PBReader[A])(f: A => B): PBReader[B] =
+      instance[B] { (index: Int, bytes: Array[Byte]) =>
+        f(reader.read(index, bytes))
+      }
+  }
 }
 
-object PBReader extends PBReaderImplicits
+object PBReader extends PBReaderImplicits {
+  def apply[A : PBReader]: PBReader[A] = implicitly
+}
