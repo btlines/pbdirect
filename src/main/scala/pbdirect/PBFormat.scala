@@ -1,7 +1,7 @@
 package pbdirect
 
 import cats.Functor
-import cats.functor.{Contravariant, Invariant}
+import cats.{Contravariant, Invariant}
 import com.google.protobuf.CodedOutputStream
 
 sealed trait PBFormat[A] extends PBReader[A] with PBWriter[A]
