@@ -1,6 +1,5 @@
 [![Build status](https://api.travis-ci.org/btlines/pbdirect.svg?branch=master)](https://travis-ci.org/btlines/pbdirect)
 [![codecov](https://codecov.io/gh/btlines/pbdirect/branch/master/graph/badge.svg)](https://codecov.io/gh/btlines/pbdirect)
-[![Dependencies](https://app.updateimpact.com/badge/852442212779298816/pbdirect.svg?config=compile)](https://app.updateimpact.com/latest/852442212779298816/pbdirect)
 [![License](https://img.shields.io/:license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Download](https://api.bintray.com/packages/beyondthelines/maven/pbdirect/images/download.svg) ](https://bintray.com/beyondthelines/maven/pbdirect/_latestVersion)
 

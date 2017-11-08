@@ -2,8 +2,7 @@ package pbdirect
 
 import java.io.ByteArrayOutputStream
 
-import cats.Functor
-import cats.functor.Contravariant
+import cats.{ Contravariant, Functor }
 import com.google.protobuf.CodedOutputStream
 import shapeless.{:+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Lazy}
 
