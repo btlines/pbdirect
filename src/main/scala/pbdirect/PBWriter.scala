@@ -15,8 +15,8 @@ trait LowPriorityPBWriterImplicits {
     new PBWriter[A] {
       override def writeTo(index: Int, value: A, out: CodedOutputStream): Unit = f(index, value, out)
     }
-  implicit object HNilWriter extends PBWriter[HNil] {
-    override def writeTo(index: Int, value: HNil, out: CodedOutputStream): Unit = ()
+  implicit val hnilWriter: PBWriter[HNil] = instance {
+    (_: Int, _: HNil, _: CodedOutputStream) => ()
   }
   implicit def consWriter[H, T <: HList](implicit head: PBWriter[H], tail: Lazy[PBWriter[T]]): PBWriter[H :: T] =
     instance { (index: Int, value: H :: T, out: CodedOutputStream) =>
@@ -32,8 +32,8 @@ trait LowPriorityPBWriterImplicits {
       out.writeByteArray(index, buffer.toByteArray)
     }
 
-  implicit object CNilWriter extends PBWriter[CNil] {
-    override def writeTo(index: Int, value: CNil, out: CodedOutputStream): Unit = ()
+  implicit val cnilWriter: PBWriter[CNil] = instance {
+    (_: Int, _: CNil, _: CodedOutputStream) => throw new Exception("Can't write CNil")
   }
   implicit def cconsWriter[H, T <: Coproduct](implicit head: PBWriter[H], tail: PBWriter[T]): PBWriter[H :+: T] =
     instance { (index: Int, value: H :+: T, out: CodedOutputStream) =>
