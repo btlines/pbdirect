@@ -12,10 +12,14 @@ trait PBReader[A] {
   def read(input: CodedInputStream): A
 }
 trait LowerPriorityPBReaderImplicits {
+  def instance[A](f: CodedInputStream => A): PBReader[A] =
+    new PBReader[A] {
+      override def read(input: CodedInputStream): A = f(input)
+    }
   implicit def coprodReader[A, R <: Coproduct](implicit
     gen: Generic.Aux[A, R],
     repr: Lazy[PBParser[R]]
-  ): PBReader[A] = { (input: CodedInputStream) =>
+  ): PBReader[A] = instance { (input: CodedInputStream) =>
     val bytes = input.readByteArray()
 
     // wraps the bytes into a protobuf single field message
@@ -32,7 +36,7 @@ trait PBReaderImplicits extends LowerPriorityPBReaderImplicits {
   implicit def prodReader[A, R <: HList](implicit
     gen: Generic.Aux[A, R],
     repr: Lazy[PBParser[R]]
-  ): PBReader[A] = { (input: CodedInputStream) =>
+  ): PBReader[A] = instance { (input: CodedInputStream) =>
     val bytes = input.readByteArray()
     gen.from(repr.value.parse(1, bytes))
   }
@@ -41,13 +45,13 @@ trait PBReaderImplicits extends LowerPriorityPBReaderImplicits {
     values: Enum.Values[A],
     ordering: Ordering[A],
     reader: PBReader[Int]
-  ): PBReader[A] = { (input: CodedInputStream) =>
+  ): PBReader[A] = instance { (input: CodedInputStream) =>
     Enum.fromInt[A](reader.read(input))
   }
   implicit def enumerationReader[E <: Enumeration](implicit
     reader: PBReader[Int],
     gen: Generic.Aux[E, HNil]
-  ): PBReader[E#Value] = { (input: CodedInputStream) =>
+  ): PBReader[E#Value] = instance { (input: CodedInputStream) =>
     val enum = gen.from(HNil)
     enum(reader.read(input))
   }
@@ -78,8 +82,8 @@ object PBReader extends PBReaderImplicits {
   def apply[A : PBReader]: PBReader[A] = implicitly
 
   implicit object FunctorReader extends Functor[PBReader] {
-    override def map[A, B](reader: PBReader[A])(f: A => B): PBReader[B] = {
-      (input: CodedInputStream) =>f(reader.read(input))
+    override def map[A, B](reader: PBReader[A])(f: A => B): PBReader[B] = instance {
+      (input: CodedInputStream) => f(reader.read(input))
     }
   }
 }
