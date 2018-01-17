@@ -20,7 +20,7 @@ In order to use PBDirect you need to add the following lines to your `build.sbt`
 ```scala
 resolvers += Resolver.bintrayRepo("beyondthelines", "maven")
 
-libraryDependencies += "beyondthelines" %% "pbdirect" % "0.0.8"
+libraryDependencies += "beyondthelines" %% "pbdirect" % "0.1.0"
 ```
 
 ## Dependencies
