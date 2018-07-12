@@ -1,103 +1,129 @@
 package pbdirect
 
-import com.google.protobuf.CodedInputStream
-import shapeless.{ :+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Lazy }
+import java.io.ByteArrayOutputStream
+
+import cats.Functor
+import com.google.protobuf.{CodedInputStream, CodedOutputStream}
+import shapeless.{:+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Lazy}
 
 import scala.util.Try
 
-trait PBExtractor[A] {
-  def extract(input: CodedInputStream): A
-}
-object PBExtractor {
-  implicit object BooleanExtractor extends PBExtractor[Boolean] {
-    override def extract(input: CodedInputStream): Boolean = input.readBool()
-  }
-  implicit object IntExtractor extends PBExtractor[Int] {
-    override def extract(input: CodedInputStream): Int = input.readInt32()
-  }
-  implicit object LongExtractor extends PBExtractor[Long] {
-    override def extract(input: CodedInputStream): Long = input.readInt64()
-  }
-  implicit object FloatExtractor extends PBExtractor[Float] {
-    override def extract(input: CodedInputStream): Float = input.readFloat()
-  }
-  implicit object DoubleExtractor extends PBExtractor[Double] {
-    override def extract(input: CodedInputStream): Double = input.readDouble()
-  }
-  implicit object StringExtractor extends PBExtractor[String] {
-    override def extract(input: CodedInputStream): String = input.readString()
-  }
-  implicit object BytesExtractor extends PBExtractor[Array[Byte]] {
-    override def extract(input: CodedInputStream): Array[Byte] = input.readByteArray()
-  }
-}
-
 trait PBReader[A] {
-  def read(index: Int, bytes: Array[Byte]): A
+  def read(input: CodedInputStream): A
 }
-
 trait LowerPriorityPBReaderImplicits {
-  def instance[A](f: (Int, Array[Byte]) => A): PBReader[A] =
+  def instance[A](f: CodedInputStream => A): PBReader[A] =
     new PBReader[A] {
-      override def read(index: Int, bytes: Array[Byte]): A = f(index, bytes)
+      override def read(input: CodedInputStream): A = f(input)
     }
-  implicit object CNilReader extends PBReader[List[CNil]] {
-    override def read(index: Int, bytes: Array[Byte]): List[CNil] =
-      throw new UnsupportedOperationException("Can't read CNil")
-  }
-  implicit def cconsReader[H, T <: Coproduct](implicit
-    head: PBReader[List[H]],
-    tail: Lazy[PBReader[List[T]]]
-  ): PBReader[List[H :+: T]] = instance { (index: Int, bytes: Array[Byte]) =>
-    Try { head.read(index, bytes).map(Inl.apply) }  getOrElse tail.value.read(index, bytes).map(Inr.apply)
-  }
   implicit def coprodReader[A, R <: Coproduct](implicit
     gen: Generic.Aux[A, R],
-    parser: Lazy[PBReader[List[R]]]
-  ): PBReader[List[A]] = instance { (index: Int, bytes: Array[Byte]) =>
-    parser.value.read(index, bytes).map(gen.from)
+    repr: Lazy[PBParser[R]]
+  ): PBReader[A] = instance { (input: CodedInputStream) =>
+    val bytes = input.readByteArray()
+
+    // wraps the bytes into a protobuf single field message
+    val out = new ByteArrayOutputStream()
+    val pbOut = CodedOutputStream.newInstance(out)
+    pbOut.writeByteArray(1, bytes)
+    pbOut.flush()
+
+    gen.from(repr.value.parse(1, out.toByteArray))
   }
 }
+trait PBReaderImplicits extends LowerPriorityPBReaderImplicits {
 
-trait LowPriorityPBReaderImplicits extends LowerPriorityPBReaderImplicits {
-  implicit object HNilReader extends PBReader[HNil] {
-    override def read(index: Int, bytes: Array[Byte]): HNil = HNil
-  }
-  implicit def consReader[H, T <: HList](implicit
-    head: PBReader[H],
-    tail: Lazy[PBReader[T]]
-  ): PBReader[H :: T] = instance { (index: Int, bytes: Array[Byte]) =>
-    head.read(index, bytes) :: tail.value.read(index + 1, bytes)
-  }
   implicit def prodReader[A, R <: HList](implicit
     gen: Generic.Aux[A, R],
-    repr: Lazy[PBReader[R]],
-    reader: PBReader[List[Array[Byte]]]
-  ): PBReader[List[A]] = instance { (index: Int, bytes: Array[Byte]) =>
-    reader.read(index, bytes).map { bs => gen.from(repr.value.read(1, bs)) }
+    repr: Lazy[PBParser[R]]
+  ): PBReader[A] = instance { (input: CodedInputStream) =>
+    val bytes = input.readByteArray()
+    gen.from(repr.value.parse(1, bytes))
   }
+
   implicit def enumReader[A](implicit
     values: Enum.Values[A],
     ordering: Ordering[A],
-    reader: PBReader[List[Int]]
-  ): PBReader[List[A]] = instance { (index: Int, bytes: Array[Byte]) =>
-    reader.read(index, bytes).map(i => Enum.fromInt(i))
+    reader: PBReader[Int]
+  ): PBReader[A] = instance { (input: CodedInputStream) =>
+    Enum.fromInt[A](reader.read(input))
   }
   implicit def enumerationReader[E <: Enumeration](implicit
-    reader: PBReader[List[Int]],
+    reader: PBReader[Int],
     gen: Generic.Aux[E, HNil]
-  ): PBReader[List[E#Value]] = instance { (index: Int, bytes: Array[Byte]) =>
+  ): PBReader[E#Value] = instance { (input: CodedInputStream) =>
     val enum = gen.from(HNil)
-    reader.read(index, bytes).map(enum.apply)
+    enum(reader.read(input))
   }
-  implicit def requiredReader[A](implicit reader: PBReader[List[A]]): PBReader[A] =
-    instance { (index: Int, bytes: Array[Byte]) =>
-      reader.read(index, bytes).last
+}
+object PBReader extends PBReaderImplicits {
+  implicit object BooleanReader$ extends PBReader[Boolean] {
+    override def read(input: CodedInputStream): Boolean = input.readBool()
+  }
+  implicit object IntReader$ extends PBReader[Int] {
+    override def read(input: CodedInputStream): Int = input.readInt32()
+  }
+  implicit object LongReader$ extends PBReader[Long] {
+    override def read(input: CodedInputStream): Long = input.readInt64()
+  }
+  implicit object FloatReader$ extends PBReader[Float] {
+    override def read(input: CodedInputStream): Float = input.readFloat()
+  }
+  implicit object DoubleReader$ extends PBReader[Double] {
+    override def read(input: CodedInputStream): Double = input.readDouble()
+  }
+  implicit object StringReader$ extends PBReader[String] {
+    override def read(input: CodedInputStream): String = input.readString()
+  }
+  implicit object BytesReader$ extends PBReader[Array[Byte]] {
+    override def read(input: CodedInputStream): Array[Byte] = input.readByteArray()
+  }
+
+  def apply[A : PBReader]: PBReader[A] = implicitly
+
+  implicit object FunctorReader extends Functor[PBReader] {
+    override def map[A, B](reader: PBReader[A])(f: A => B): PBReader[B] = instance {
+      (input: CodedInputStream) => f(reader.read(input))
     }
+  }
 }
 
-trait PBReaderImplicits extends LowPriorityPBReaderImplicits {
-  implicit def repeatedReader[A](implicit extractor: PBExtractor[A]): PBReader[List[A]] =
+trait PBParser[A] {
+  def parse(index: Int, bytes: Array[Byte]): A
+}
+
+trait LowPriorityPBParserImplicits {
+  def instance[A](f: (Int, Array[Byte]) => A): PBParser[A] = new PBParser[A] {
+    override def parse(index: Int, bytes: Array[Byte]): A = f(index, bytes)
+  }
+  implicit val hnilParser: PBParser[HNil] = instance {
+    (index: Int, bytes: Array[Byte]) => HNil
+  }
+  implicit def consParser[H, T <: HList](implicit
+    head: PBParser[H],
+    tail: Lazy[PBParser[T]]
+  ): PBParser[H :: T] = instance { (index: Int, bytes: Array[Byte]) =>
+    head.parse(index, bytes) :: tail.value.parse(index + 1, bytes)
+  }
+
+  implicit val cnilParser: PBParser[CNil] = instance {
+    (index: Int, bytes: Array[Byte]) =>
+      throw new UnsupportedOperationException("Can't read CNil")
+  }
+  implicit def cconsParser[H, T <: Coproduct](implicit
+    head: PBParser[H],
+    tail: Lazy[PBParser[T]]
+  ): PBParser[H :+: T] = instance { (index: Int, bytes: Array[Byte]) =>
+    Try {
+      Inl(head.parse(index, bytes))
+    } getOrElse {
+      Inr(tail.value.parse(index, bytes))
+    }
+  }
+}
+
+trait PBParserImplicits extends LowPriorityPBParserImplicits {
+  implicit def repeatedParser[A](implicit reader: PBReader[A]): PBParser[List[A]] =
     instance { (index: Int, bytes: Array[Byte]) =>
       val input = CodedInputStream.newInstance(bytes)
       var done = false
@@ -105,20 +131,34 @@ trait PBReaderImplicits extends LowPriorityPBReaderImplicits {
       while (!done) {
         input.readTag() match {
           case 0 => done = true
-          case tag if (tag >> 3) == index => as ::= extractor.extract(input)
+          case tag if (tag >> 3) == index => as ::= reader.read(input)
           case tag => input.skipField(tag)
         }
       }
       as.reverse
     }
-  implicit def optionalReader[A](implicit reader: PBReader[List[A]]): PBReader[Option[A]] =
+  implicit def requiredParser[A](implicit reader: PBReader[A]): PBParser[A] =
     instance { (index: Int, bytes: Array[Byte]) =>
-      reader.read(index, bytes).lastOption
+      val input = CodedInputStream.newInstance(bytes)
+      var done = false
+      var as: List[A] = Nil
+      while (!done) {
+        input.readTag() match {
+          case 0 => done = true
+          case tag if (tag >> 3) == index => as ::= reader.read(input)
+          case tag => input.skipField(tag)
+        }
+      }
+      as.head
     }
-  implicit def mapReader[K, V](implicit reader: PBReader[List[(K, V)]]): PBReader[Map[K, V]] =
+  implicit def optionalParser[A](implicit parser: PBParser[List[A]]): PBParser[Option[A]] =
     instance { (index: Int, bytes: Array[Byte]) =>
-      reader.read(index, bytes).toMap
+      parser.parse(index, bytes).lastOption
+    }
+  implicit def mapParser[K, V](implicit parser: PBParser[List[(K, V)]]): PBParser[Map[K, V]] =
+    instance { (index: Int, bytes: Array[Byte]) =>
+      parser.parse(index, bytes).toMap
     }
 }
 
-object PBReader extends PBReaderImplicits
+object PBParser extends PBParserImplicits

@@ -3,7 +3,7 @@ import java.io.ByteArrayOutputStream
 import com.google.protobuf.{ CodedInputStream, CodedOutputStream }
 
 package object pbdirect {
-  implicit class PBWriterOps[A](a: A) {
+  implicit class PBWriterOps[A](private val a: A) extends AnyVal {
     def toPB(implicit writer: PBWriter[A]): Array[Byte] = {
       val out = new ByteArrayOutputStream()
       val pbOut = CodedOutputStream.newInstance(out)
@@ -16,14 +16,14 @@ package object pbdirect {
       input.readByteArray()
     }
   }
-  implicit class PBReaderOps(bytes: Array[Byte]) {
-    def pbTo[A](implicit reader: PBReader[A]): A = {
+  implicit class PBParserOps(private val bytes: Array[Byte]) extends AnyVal {
+    def pbTo[A](implicit reader: PBParser[A]): A = {
       // wraps the bytes into a protobuf single field message
       val out = new ByteArrayOutputStream()
       val pbOut = CodedOutputStream.newInstance(out)
       pbOut.writeByteArray(1, bytes)
       pbOut.flush()
-      reader.read(1, out.toByteArray)
+      reader.parse(1, out.toByteArray)
     }
   }
 }

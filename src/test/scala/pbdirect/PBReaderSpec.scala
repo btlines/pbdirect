@@ -113,5 +113,13 @@ class PBReaderSpec extends WordSpecLike with Matchers {
       val bytes = Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114, 111, 115, 101, 114, 118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40, -71, 96)
       bytes.pbTo[Metrics] shouldBe message
     }
+    "derive new instance using map" in {
+      import java.time.Instant
+      import cats.syntax.functor._
+      implicit val instantReader: PBReader[Instant] = PBReader[Long].map(Instant.ofEpochMilli)
+      case class Message(instant: Instant)
+      val instant = Instant.ofEpochMilli(1499411227777L)
+      Array[Byte](8, -127, -55, -2, -34, -47, 43).pbTo[Message] shouldBe Message(instant)
+    }
   }
 }

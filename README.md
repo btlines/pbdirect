@@ -1,6 +1,5 @@
 [![Build status](https://api.travis-ci.org/btlines/pbdirect.svg?branch=master)](https://travis-ci.org/btlines/pbdirect)
 [![codecov](https://codecov.io/gh/btlines/pbdirect/branch/master/graph/badge.svg)](https://codecov.io/gh/btlines/pbdirect)
-[![Dependencies](https://app.updateimpact.com/badge/852442212779298816/pbdirect.svg?config=compile)](https://app.updateimpact.com/latest/852442212779298816/pbdirect)
 [![License](https://img.shields.io/:license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Download](https://api.bintray.com/packages/beyondthelines/maven/pbdirect/images/download.svg) ](https://bintray.com/beyondthelines/maven/pbdirect/_latestVersion)
 
@@ -21,7 +20,7 @@ In order to use PBDirect you need to add the following lines to your `build.sbt`
 ```scala
 resolvers += Resolver.bintrayRepo("beyondthelines", "maven")
 
-libraryDependencies += "beyondthelines" %% "pbdirect" % "0.0.5"
+libraryDependencies += "beyondthelines" %% "pbdirect" % "0.1.0"
 ```
 
 ## Dependencies
@@ -47,7 +46,7 @@ import pbdirect._
 
 ### Schema definition
 
-PBDirect serialises case classes into protobuf and there is no need for a .proto shema definition file.
+PBDirect serialises case classes into protobuf and there is no need for a .proto schema definition file.
 
 ```scala
 case class MyMessage(
@@ -90,6 +89,40 @@ This method is added implicitly on all `Array[Byte]` by importing `pbdirect._`.
 ```scala
 val bytes: Array[Byte] = Array[Byte](8, 123, 18, 5, 72, 101, 108, 108, 111, 24, 1, 32, 2, 40, 3, 48, 4)
 val message = bytes.pbTo[MyMessage]
+```
+
+## Extension
+
+You might want to define your own formats for unsupported types.
+E.g. to add a format to write `java.time.Instant` you can do:
+
+```scala
+import java.time.Instant
+import cats.syntax.invariant._
+
+implicit val instantFormat: PBFormat[Instant] =
+  PBFormat[Long].imap(Instant.ofEpochMilli)(_.toEpochMilli)
+```
+
+If you only need a reader you can map over an existing `PBReader`
+
+```scala
+import java.time.Instant
+import cats.syntax.functor._
+
+implicit val instantReader: PBReader[Instant] =
+  PBReader[Long].map(Instant.ofEpochMilli)
+```
+
+And for a writer you simply contramap over it:
+
+```scala
+import java.time.Instant
+import cats.syntax.contravariant._
+
+implicit val instantWriter: PBWriter[Instant] =
+  PBWriter[Long].contramap(_.toEpochMilli)
+  )
 ```
 
 ### More information

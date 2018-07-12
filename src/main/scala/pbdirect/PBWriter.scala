@@ -2,9 +2,9 @@ package pbdirect
 
 import java.io.ByteArrayOutputStream
 
-import cats.Functor
+import cats.{ Contravariant, Functor }
 import com.google.protobuf.CodedOutputStream
-import shapeless.{ :+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Lazy }
+import shapeless.{:+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Lazy}
 
 trait PBWriter[A] {
   def writeTo(index: Int, value: A, out: CodedOutputStream): Unit
@@ -15,8 +15,8 @@ trait LowPriorityPBWriterImplicits {
     new PBWriter[A] {
       override def writeTo(index: Int, value: A, out: CodedOutputStream): Unit = f(index, value, out)
     }
-  implicit object HNilWriter extends PBWriter[HNil] {
-    override def writeTo(index: Int, value: HNil, out: CodedOutputStream): Unit = ()
+  implicit val hnilWriter: PBWriter[HNil] = instance {
+    (_: Int, _: HNil, _: CodedOutputStream) => ()
   }
   implicit def consWriter[H, T <: HList](implicit head: PBWriter[H], tail: Lazy[PBWriter[T]]): PBWriter[H :: T] =
     instance { (index: Int, value: H :: T, out: CodedOutputStream) =>
@@ -32,8 +32,8 @@ trait LowPriorityPBWriterImplicits {
       out.writeByteArray(index, buffer.toByteArray)
     }
 
-  implicit object CNilWriter extends PBWriter[CNil] {
-    override def writeTo(index: Int, value: CNil, out: CodedOutputStream): Unit = ()
+  implicit val cnilWriter: PBWriter[CNil] = instance {
+    (_: Int, _: CNil, _: CodedOutputStream) => throw new Exception("Can't write CNil")
   }
   implicit def cconsWriter[H, T <: Coproduct](implicit head: PBWriter[H], tail: PBWriter[T]): PBWriter[H :+: T] =
     instance { (index: Int, value: H :+: T, out: CodedOutputStream) =>
@@ -94,6 +94,15 @@ trait PBWriterImplicits extends LowPriorityPBWriterImplicits {
     instance { (index: Int, value: E, out: CodedOutputStream) =>
       out.writeInt32(index, value.id)
     }
+
+  implicit object ContravariantWriter extends Contravariant[PBWriter] {
+    override def contramap[A, B](writer: PBWriter[A])(f: B => A) =
+      instance { (index: Int, b: B, out: CodedOutputStream) =>
+        writer.writeTo(index, f(b), out)
+      }
+  }
 }
 
-object PBWriter extends PBWriterImplicits
+object PBWriter extends PBWriterImplicits {
+  def apply[A : PBWriter]: PBWriter[A] = implicitly
+}
