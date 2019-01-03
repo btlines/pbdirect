@@ -1,3 +1,24 @@
+/*
+ * Copyright (c) 2019 Beyond the lines
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package pbdirect
 
 import java.io.ByteArrayOutputStream
@@ -16,14 +37,14 @@ trait LowerPriorityPBReaderImplicits {
     new PBReader[A] {
       override def read(input: CodedInputStream): A = f(input)
     }
-  implicit def coprodReader[A, R <: Coproduct](implicit
-    gen: Generic.Aux[A, R],
-    repr: Lazy[PBParser[R]]
-  ): PBReader[A] = instance { (input: CodedInputStream) =>
+  implicit def coprodReader[A, R <: Coproduct](
+      implicit
+      gen: Generic.Aux[A, R],
+      repr: Lazy[PBParser[R]]): PBReader[A] = instance { (input: CodedInputStream) =>
     val bytes = input.readByteArray()
 
     // wraps the bytes into a protobuf single field message
-    val out = new ByteArrayOutputStream()
+    val out   = new ByteArrayOutputStream()
     val pbOut = CodedOutputStream.newInstance(out)
     pbOut.writeByteArray(1, bytes)
     pbOut.flush()
@@ -33,25 +54,25 @@ trait LowerPriorityPBReaderImplicits {
 }
 trait PBReaderImplicits extends LowerPriorityPBReaderImplicits {
 
-  implicit def prodReader[A, R <: HList](implicit
-    gen: Generic.Aux[A, R],
-    repr: Lazy[PBParser[R]]
-  ): PBReader[A] = instance { (input: CodedInputStream) =>
+  implicit def prodReader[A, R <: HList](
+      implicit
+      gen: Generic.Aux[A, R],
+      repr: Lazy[PBParser[R]]): PBReader[A] = instance { (input: CodedInputStream) =>
     val bytes = input.readByteArray()
     gen.from(repr.value.parse(1, bytes))
   }
 
-  implicit def enumReader[A](implicit
-    values: Enum.Values[A],
-    ordering: Ordering[A],
-    reader: PBReader[Int]
-  ): PBReader[A] = instance { (input: CodedInputStream) =>
+  implicit def enumReader[A](
+      implicit
+      values: Enum.Values[A],
+      ordering: Ordering[A],
+      reader: PBReader[Int]): PBReader[A] = instance { (input: CodedInputStream) =>
     Enum.fromInt[A](reader.read(input))
   }
-  implicit def enumerationReader[E <: Enumeration](implicit
-    reader: PBReader[Int],
-    gen: Generic.Aux[E, HNil]
-  ): PBReader[E#Value] = instance { (input: CodedInputStream) =>
+  implicit def enumerationReader[E <: Enumeration](
+      implicit
+      reader: PBReader[Int],
+      gen: Generic.Aux[E, HNil]): PBReader[E#Value] = instance { (input: CodedInputStream) =>
     val enum = gen.from(HNil)
     enum(reader.read(input))
   }
@@ -79,11 +100,12 @@ object PBReader extends PBReaderImplicits {
     override def read(input: CodedInputStream): Array[Byte] = input.readByteArray()
   }
 
-  def apply[A : PBReader]: PBReader[A] = implicitly
+  def apply[A: PBReader]: PBReader[A] = implicitly
 
   implicit object FunctorReader extends Functor[PBReader] {
     override def map[A, B](reader: PBReader[A])(f: A => B): PBReader[B] = instance {
-      (input: CodedInputStream) => f(reader.read(input))
+      (input: CodedInputStream) =>
+        f(reader.read(input))
     }
   }
 }
@@ -96,24 +118,23 @@ trait LowPriorityPBParserImplicits {
   def instance[A](f: (Int, Array[Byte]) => A): PBParser[A] = new PBParser[A] {
     override def parse(index: Int, bytes: Array[Byte]): A = f(index, bytes)
   }
-  implicit val hnilParser: PBParser[HNil] = instance {
-    (index: Int, bytes: Array[Byte]) => HNil
+  implicit val hnilParser: PBParser[HNil] = instance { (index: Int, bytes: Array[Byte]) =>
+    HNil
   }
-  implicit def consParser[H, T <: HList](implicit
-    head: PBParser[H],
-    tail: Lazy[PBParser[T]]
-  ): PBParser[H :: T] = instance { (index: Int, bytes: Array[Byte]) =>
+  implicit def consParser[H, T <: HList](
+      implicit
+      head: PBParser[H],
+      tail: Lazy[PBParser[T]]): PBParser[H :: T] = instance { (index: Int, bytes: Array[Byte]) =>
     head.parse(index, bytes) :: tail.value.parse(index + 1, bytes)
   }
 
-  implicit val cnilParser: PBParser[CNil] = instance {
-    (index: Int, bytes: Array[Byte]) =>
-      throw new UnsupportedOperationException("Can't read CNil")
+  implicit val cnilParser: PBParser[CNil] = instance { (index: Int, bytes: Array[Byte]) =>
+    throw new UnsupportedOperationException("Can't read CNil")
   }
-  implicit def cconsParser[H, T <: Coproduct](implicit
-    head: PBParser[H],
-    tail: Lazy[PBParser[T]]
-  ): PBParser[H :+: T] = instance { (index: Int, bytes: Array[Byte]) =>
+  implicit def cconsParser[H, T <: Coproduct](
+      implicit
+      head: PBParser[H],
+      tail: Lazy[PBParser[T]]): PBParser[H :+: T] = instance { (index: Int, bytes: Array[Byte]) =>
     Try {
       Inl(head.parse(index, bytes))
     } getOrElse {
@@ -125,28 +146,28 @@ trait LowPriorityPBParserImplicits {
 trait PBParserImplicits extends LowPriorityPBParserImplicits {
   implicit def repeatedParser[A](implicit reader: PBReader[A]): PBParser[List[A]] =
     instance { (index: Int, bytes: Array[Byte]) =>
-      val input = CodedInputStream.newInstance(bytes)
-      var done = false
+      val input       = CodedInputStream.newInstance(bytes)
+      var done        = false
       var as: List[A] = Nil
       while (!done) {
         input.readTag() match {
-          case 0 => done = true
+          case 0                          => done = true
           case tag if (tag >> 3) == index => as ::= reader.read(input)
-          case tag => input.skipField(tag)
+          case tag                        => input.skipField(tag)
         }
       }
       as.reverse
     }
   implicit def requiredParser[A](implicit reader: PBReader[A]): PBParser[A] =
     instance { (index: Int, bytes: Array[Byte]) =>
-      val input = CodedInputStream.newInstance(bytes)
-      var done = false
+      val input       = CodedInputStream.newInstance(bytes)
+      var done        = false
       var as: List[A] = Nil
       while (!done) {
         input.readTag() match {
-          case 0 => done = true
+          case 0                          => done = true
           case tag if (tag >> 3) == index => as ::= reader.read(input)
-          case tag => input.skipField(tag)
+          case tag                        => input.skipField(tag)
         }
       }
       as.head

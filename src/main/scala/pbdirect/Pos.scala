@@ -1,3 +1,24 @@
+/*
+ * Copyright (c) 2019 Beyond the lines
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package pbdirect
 
 trait Pos {
@@ -9,16 +30,16 @@ object Pos {
     override def compare(x: P, y: P): Int = x._pos - y._pos
   }
 
-  trait _0 extends Pos { override val _pos = 0 }
-  trait _1 extends Pos { override val _pos = 1 }
-  trait _2 extends Pos { override val _pos = 2 }
-  trait _3 extends Pos { override val _pos = 3 }
-  trait _4 extends Pos { override val _pos = 4 }
-  trait _5 extends Pos { override val _pos = 5 }
-  trait _6 extends Pos { override val _pos = 6 }
-  trait _7 extends Pos { override val _pos = 7 }
-  trait _8 extends Pos { override val _pos = 8 }
-  trait _9 extends Pos { override val _pos = 9 }
+  trait _0  extends Pos { override val _pos = 0  }
+  trait _1  extends Pos { override val _pos = 1  }
+  trait _2  extends Pos { override val _pos = 2  }
+  trait _3  extends Pos { override val _pos = 3  }
+  trait _4  extends Pos { override val _pos = 4  }
+  trait _5  extends Pos { override val _pos = 5  }
+  trait _6  extends Pos { override val _pos = 6  }
+  trait _7  extends Pos { override val _pos = 7  }
+  trait _8  extends Pos { override val _pos = 8  }
+  trait _9  extends Pos { override val _pos = 9  }
   trait _10 extends Pos { override val _pos = 10 }
   trait _11 extends Pos { override val _pos = 11 }
   trait _12 extends Pos { override val _pos = 12 }

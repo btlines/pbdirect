@@ -1,6 +1,27 @@
+/*
+ * Copyright (c) 2019 Beyond the lines
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package pbdirect
 
-import org.scalatest.{ Matchers, WordSpecLike }
+import org.scalatest.{Matchers, WordSpecLike}
 
 class PBReaderSpec extends WordSpecLike with Matchers {
   "PBReader" should {
@@ -61,7 +82,7 @@ class PBReaderSpec extends WordSpecLike with Matchers {
     }
     "read a required field from Protobuf" in {
       case class RequiredMessage(value: Int)
-      val bytes = Array[Byte](8 , 5)
+      val bytes = Array[Byte](8, 5)
       bytes.pbTo[RequiredMessage] shouldBe RequiredMessage(5)
     }
     "read an empty message from Protobuf" in {
@@ -97,9 +118,9 @@ class PBReaderSpec extends WordSpecLike with Matchers {
     }
     "read a sealed trait from Protobuf" in {
       sealed trait Message
-      case class IntMessage(value: Option[Int]) extends Message
+      case class IntMessage(value: Option[Int])       extends Message
       case class StringMessage(value: Option[String]) extends Message
-      val intBytes = Array[Byte](8, 5)
+      val intBytes    = Array[Byte](8, 5)
       val stringBytes = Array[Byte](10, 5, 72, 101, 108, 108, 111)
       intBytes.pbTo[Message] shouldBe IntMessage(Some(5))
       stringBytes.pbTo[Message] shouldBe StringMessage(Some("Hello"))
@@ -110,7 +131,9 @@ class PBReaderSpec extends WordSpecLike with Matchers {
       val message = Metrics(
         Metric("metric", "microservices", "node", 12F, 12345) :: Nil
       )
-      val bytes = Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114, 111, 115, 101, 114, 118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40, -71, 96)
+      val bytes = Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114,
+        111, 115, 101, 114, 118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40,
+        -71, 96)
       bytes.pbTo[Metrics] shouldBe message
     }
     "derive new instance using map" in {
