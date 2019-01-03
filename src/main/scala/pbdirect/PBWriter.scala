@@ -1,8 +1,29 @@
+/*
+ * Copyright (c) 2019 Beyond the lines
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package pbdirect
 
 import java.io.ByteArrayOutputStream
 
-import cats.{ Contravariant, Functor }
+import cats.{Contravariant, Functor}
 import com.google.protobuf.CodedOutputStream
 import shapeless.{:+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Lazy}
 
@@ -13,36 +34,45 @@ trait PBWriter[A] {
 trait LowPriorityPBWriterImplicits {
   def instance[A](f: (Int, A, CodedOutputStream) => Unit): PBWriter[A] =
     new PBWriter[A] {
-      override def writeTo(index: Int, value: A, out: CodedOutputStream): Unit = f(index, value, out)
+      override def writeTo(index: Int, value: A, out: CodedOutputStream): Unit =
+        f(index, value, out)
     }
-  implicit val hnilWriter: PBWriter[HNil] = instance {
-    (_: Int, _: HNil, _: CodedOutputStream) => ()
+  implicit val hnilWriter: PBWriter[HNil] = instance { (_: Int, _: HNil, _: CodedOutputStream) =>
+    ()
   }
-  implicit def consWriter[H, T <: HList](implicit head: PBWriter[H], tail: Lazy[PBWriter[T]]): PBWriter[H :: T] =
+  implicit def consWriter[H, T <: HList](
+      implicit head: PBWriter[H],
+      tail: Lazy[PBWriter[T]]): PBWriter[H :: T] =
     instance { (index: Int, value: H :: T, out: CodedOutputStream) =>
       head.writeTo(index, value.head, out)
       tail.value.writeTo(index + 1, value.tail, out)
     }
-  implicit def prodWriter[A, R <: HList](implicit gen: Generic.Aux[A, R], writer: Lazy[PBWriter[R]]): PBWriter[A] =
+  implicit def prodWriter[A, R <: HList](
+      implicit gen: Generic.Aux[A, R],
+      writer: Lazy[PBWriter[R]]): PBWriter[A] =
     instance { (index: Int, value: A, out: CodedOutputStream) =>
       val buffer = new ByteArrayOutputStream()
-      val pbOut = CodedOutputStream.newInstance(buffer)
+      val pbOut  = CodedOutputStream.newInstance(buffer)
       writer.value.writeTo(1, gen.to(value), pbOut)
       pbOut.flush()
       out.writeByteArray(index, buffer.toByteArray)
     }
 
-  implicit val cnilWriter: PBWriter[CNil] = instance {
-    (_: Int, _: CNil, _: CodedOutputStream) => throw new Exception("Can't write CNil")
+  implicit val cnilWriter: PBWriter[CNil] = instance { (_: Int, _: CNil, _: CodedOutputStream) =>
+    throw new Exception("Can't write CNil")
   }
-  implicit def cconsWriter[H, T <: Coproduct](implicit head: PBWriter[H], tail: PBWriter[T]): PBWriter[H :+: T] =
+  implicit def cconsWriter[H, T <: Coproduct](
+      implicit head: PBWriter[H],
+      tail: PBWriter[T]): PBWriter[H :+: T] =
     instance { (index: Int, value: H :+: T, out: CodedOutputStream) =>
       value match {
         case Inl(h) => head.writeTo(index, h, out)
         case Inr(t) => tail.writeTo(index, t, out)
       }
     }
-  implicit def coprodWriter[A, R <: Coproduct](implicit gen: Generic.Aux[A, R], writer: PBWriter[R]): PBWriter[A] =
+  implicit def coprodWriter[A, R <: Coproduct](
+      implicit gen: Generic.Aux[A, R],
+      writer: PBWriter[R]): PBWriter[A] =
     instance { (index: Int, value: A, out: CodedOutputStream) =>
       writer.writeTo(index, gen.to(value), out)
     }
@@ -77,9 +107,13 @@ trait PBWriterImplicits extends LowPriorityPBWriterImplicits {
     override def writeTo(index: Int, value: Array[Byte], out: CodedOutputStream): Unit =
       out.writeByteArray(index, value)
   }
-  implicit def functorWriter[F[_], A](implicit functor: Functor[F], writer: PBWriter[A]): PBWriter[F[A]] =
+  implicit def functorWriter[F[_], A](
+      implicit functor: Functor[F],
+      writer: PBWriter[A]): PBWriter[F[A]] =
     instance { (index: Int, value: F[A], out: CodedOutputStream) =>
-      functor.map(value) { v => writer.writeTo(index, v, out) }
+      functor.map(value) { v =>
+        writer.writeTo(index, v, out)
+      }
       ()
     }
   implicit def mapWriter[K, V](implicit writer: PBWriter[List[(K, V)]]): PBWriter[Map[K, V]] =
@@ -104,5 +138,5 @@ trait PBWriterImplicits extends LowPriorityPBWriterImplicits {
 }
 
 object PBWriter extends PBWriterImplicits {
-  def apply[A : PBWriter]: PBWriter[A] = implicitly
+  def apply[A: PBWriter]: PBWriter[A] = implicitly
 }
