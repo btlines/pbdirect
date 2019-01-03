@@ -1,7 +1,7 @@
 
 [comment]: # (Start Badges)
 
-[![Build Status](https://travis-ci.org/47deg/pbdirect.svg?branch=master)](https://travis-ci.org/47deg/pbdirect) [![Join the chat at https://gitter.im/47deg/pbdirect](https://badges.gitter.im/47deg/pbdirect.svg)](https://gitter.im/47deg/pbdirect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![codecov.io](http://codecov.io/github/47deg/pbdirect/coverage.svg?branch=master)](http://codecov.io/github/47deg/pbdirect?branch=master) [![Maven Central](https://img.shields.io/badge/maven%20central-0.2.0-green.svg)](https://oss.sonatype.org/#nexus-search;gav~com.47deg~pbdirect*) [![License](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://raw.githubusercontent.com/47deg/pbdirect/master/LICENSE) [![Latest version](https://img.shields.io/badge/pbdirect-0.2.0-green.svg)](https://index.scala-lang.org/47deg/pbdirect) [![Scala.js](http://scala-js.org/assets/badges/scalajs-0.6.17.svg)](http://scala-js.org) [![GitHub Issues](https://img.shields.io/github/issues/47deg/pbdirect.svg)](https://github.com/47deg/pbdirect/issues)
+[![Build Status](https://travis-ci.org/47deg/pbdirect.svg?branch=master)](https://travis-ci.org/47deg/pbdirect) [![codecov.io](http://codecov.io/github/47deg/pbdirect/coverage.svg?branch=master)](http://codecov.io/github/47deg/pbdirect?branch=master) [![Maven Central](https://img.shields.io/badge/maven%20central-0.2.0-green.svg)](https://oss.sonatype.org/#nexus-search;gav~com.47deg~pbdirect*) [![Latest version](https://img.shields.io/badge/pbdirect-0.2.0-green.svg)](https://index.scala-lang.org/47deg/pbdirect) [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://raw.githubusercontent.com/47deg/pbdirect/master/LICENSE) [![Join the chat at https://gitter.im/47deg/pbdirect](https://badges.gitter.im/47deg/pbdirect.svg)](https://gitter.im/47deg/pbdirect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![GitHub Issues](https://img.shields.io/github/issues/47deg/pbdirect.svg)](https://github.com/47deg/pbdirect/issues)
 
 [comment]: # (End Badges)
 
@@ -128,3 +128,12 @@ implicit val instantWriter: PBWriter[Instant] =
   PBWriter[Long].contramap(_.toEpochMilli)
   )
 ```
+
+[comment]: # (Start Copyright)
+# Copyright
+
+pbdirect is designed and developed by 47 Degrees
+
+Copyright (C) 2019 47 Degrees. <http://47deg.com>
+
+[comment]: # (End Copyright)
