@@ -1,7 +1,9 @@
-[![Build status](https://api.travis-ci.org/btlines/pbdirect.svg?branch=master)](https://travis-ci.org/btlines/pbdirect)
-[![codecov](https://codecov.io/gh/btlines/pbdirect/branch/master/graph/badge.svg)](https://codecov.io/gh/btlines/pbdirect)
-[![License](https://img.shields.io/:license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Download](https://api.bintray.com/packages/beyondthelines/maven/pbdirect/images/download.svg) ](https://bintray.com/beyondthelines/maven/pbdirect/_latestVersion)
+
+[comment]: # (Start Badges)
+
+[![Build Status](https://travis-ci.org/47deg/pbdirect.svg?branch=master)](https://travis-ci.org/47deg/pbdirect) [![Join the chat at https://gitter.im/47deg/pbdirect](https://badges.gitter.im/47deg/pbdirect.svg)](https://gitter.im/47deg/pbdirect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![codecov.io](http://codecov.io/github/47deg/pbdirect/coverage.svg?branch=master)](http://codecov.io/github/47deg/pbdirect?branch=master) [![Maven Central](https://img.shields.io/badge/maven%20central-0.2.0-green.svg)](https://oss.sonatype.org/#nexus-search;gav~com.47deg~pbdirect*) [![License](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://raw.githubusercontent.com/47deg/pbdirect/master/LICENSE) [![Latest version](https://img.shields.io/badge/pbdirect-0.2.0-green.svg)](https://index.scala-lang.org/47deg/pbdirect) [![Scala.js](http://scala-js.org/assets/badges/scalajs-0.6.17.svg)](http://scala-js.org) [![GitHub Issues](https://img.shields.io/github/issues/47deg/pbdirect.svg)](https://github.com/47deg/pbdirect/issues)
+
+[comment]: # (End Badges)
 
 # PBDirect
 
@@ -17,11 +19,13 @@ PBDirect aims just that: Make it easier to serialize/deserialize into Protobuf.
 
 In order to use PBDirect you need to add the following lines to your `build.sbt`:
 
-```scala
-resolvers += Resolver.bintrayRepo("beyondthelines", "maven")
+[comment]: # (Start Replace)
 
-libraryDependencies += "beyondthelines" %% "pbdirect" % "0.1.0"
+```scala
+libraryDependencies += "com.47deg" %% "pbdirect" % "0.2.0"
 ```
+
+[comment]: # (End Replace)
 
 ## Dependencies
 
@@ -124,7 +128,3 @@ implicit val instantWriter: PBWriter[Instant] =
   PBWriter[Long].contramap(_.toEpochMilli)
   )
 ```
-
-### More information
-
-Finally you can find more implementation details [over here](http://www.beyondthelines.net/computing/pbdirect-protobuf-without-the-proto-files/)
