@@ -1,5 +1,12 @@
 # Changelog
 
+## 03/02/2019 - Version 0.2.1
+
+Release changes:
+
+* Adds missing PGP settings ([#5](https://github.com/47deg/pbdirect/pull/5))
+
+
 ## 01/03/2019 - Version 0.2.0
 
 Release changes:
