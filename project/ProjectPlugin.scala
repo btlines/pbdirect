@@ -1,4 +1,4 @@
-import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport.{HeaderLicense, headerLicense}
+import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport.{headerLicense, HeaderLicense}
 import sbt.Keys._
 import sbt._
 import sbtorgpolicies.OrgPoliciesPlugin
@@ -18,11 +18,11 @@ object ProjectPlugin extends AutoPlugin {
   object autoImport {
 
     lazy val V = new {
-      val cats: String = "1.5.0"
-      val protobuf: String = "3.6.1"
-      val scala211: String = "2.11.12"
-      val scala212: String = "2.12.8"
-      val scalaTest: String = "3.0.5"
+      val cats: String      = "1.6.0"
+      val protobuf: String  = "3.6.1"
+      val scala211: String  = "2.11.12"
+      val scala212: String  = "2.12.8"
+      val scalaTest: String = "3.0.6"
       val shapeless: String = "2.3.3"
     }
   }
@@ -57,10 +57,10 @@ object ProjectPlugin extends AutoPlugin {
       scalaVersion := V.scala212,
       crossScalaVersions := Seq(scalaVersion.value, V.scala211),
       libraryDependencies ++= Seq(
-        "com.chuusai" %% "shapeless" % V.shapeless,
-        "org.typelevel" %% "cats-core" % V.cats,
+        "com.chuusai"         %% "shapeless"    % V.shapeless,
+        "org.typelevel"       %% "cats-core"    % V.cats,
         "com.google.protobuf" % "protobuf-java" % V.protobuf,
-        "org.scalatest" %% "scalatest" % V.scalaTest % Test
+        "org.scalatest"       %% "scalatest"    % V.scalaTest % Test
       ),
       orgScriptTaskListSetting := List(
         (clean in Global).asRunnableItemFull,
