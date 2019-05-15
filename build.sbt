@@ -1,10 +1,10 @@
 name := "pbdirect"
 
-version := "0.1.0"
+version := "0.0.9"
 
-scalaVersion := "2.12.2"
+scalaVersion := "2.12.8"
 
-crossScalaVersions := Seq("2.11.11", "2.12.4")
+crossScalaVersions := Seq("2.11.12", "2.12.8")
 
 libraryDependencies ++= Seq(
   "com.chuusai"         %% "shapeless"     % "2.3.3",
