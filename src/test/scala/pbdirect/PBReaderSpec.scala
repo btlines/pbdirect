@@ -30,6 +30,16 @@ class PBReaderSpec extends WordSpecLike with Matchers {
       val bytes = Array[Byte](8, 1)
       bytes.pbTo[BooleanMessage] shouldBe BooleanMessage(Some(true))
     }
+    "read a Byte from Protobuf" in {
+      case class ByteMessage(value: Option[Byte])
+      val bytes = Array[Byte](8, 32)
+      bytes.pbTo[ByteMessage] shouldBe ByteMessage(Some(32))
+    }
+    "read a Short from Protobuf" in {
+      case class ShortMessage(value: Option[Short])
+      val bytes = Array[Byte](8, -1, 63)
+      bytes.pbTo[ShortMessage] shouldBe ShortMessage(Some(8191))
+    }
     "read an Int from Protobuf" in {
       case class IntMessage(value: Option[Int])
       val bytes = Array[Byte](8, 5)
@@ -105,10 +115,20 @@ class PBReaderSpec extends WordSpecLike with Matchers {
       val bytes = Array[Byte](8, 1, 8, 2, 8, 3, 8, 4)
       bytes.pbTo[RepeatedMessage] shouldBe RepeatedMessage(1 :: 2 :: 3 :: 4 :: Nil)
     }
+    "read a message with Seq from Protobuf" in {
+      case class RepeatedMessage(values: Seq[Int])
+      val bytes = Array[Byte](8, 1, 8, 2, 8, 3, 8, 4)
+      bytes.pbTo[RepeatedMessage] shouldBe RepeatedMessage(Seq(1, 2, 3, 4))
+    }
     "read a Map from Protobuf" in {
       case class MapMessage(values: Map[Int, String])
       val bytes = Array[Byte](10, 7, 8, 1, 18, 3, 111, 110, 101, 10, 7, 8, 2, 18, 3, 116, 119, 111)
       bytes.pbTo[MapMessage] shouldBe MapMessage(Map(1 -> "one", 2 -> "two"))
+    }
+    "read a scala.collection.Map from Protobuf" in {
+      case class MapMessage(values: collection.Map[Int, String])
+      val bytes = Array[Byte](10, 7, 8, 1, 18, 3, 111, 110, 101, 10, 7, 8, 2, 18, 3, 116, 119, 111)
+      bytes.pbTo[MapMessage] shouldBe MapMessage(collection.Map(1 -> "one", 2 -> "two"))
     }
     "read a nested message from Protobuf" in {
       case class InnerMessage(value: Option[Int])

@@ -32,6 +32,16 @@ class PBWriterSpec extends WordSpecLike with Matchers {
       val message = BooleanMessage(Some(true))
       message.toPB shouldBe Array[Byte](8, 1)
     }
+    "write a Byte to Protobuf" in {
+      case class ByteMessage(value: Option[Byte])
+      val message = ByteMessage(Some(32))
+      message.toPB shouldBe Array[Byte](8, 32)
+    }
+    "write a Short to Protobuf" in {
+      case class ShortMessage(value: Option[Short])
+      val message = ShortMessage(Some(8191))
+      message.toPB shouldBe Array[Byte](8, -1, 63)
+    }
     "write an Int to Protobuf" in {
       case class IntMessage(value: Option[Int])
       val message = IntMessage(Some(5))
@@ -105,11 +115,21 @@ class PBWriterSpec extends WordSpecLike with Matchers {
       val message = RepeatedMessage(1 :: 2 :: 3 :: 4 :: Nil)
       message.toPB shouldBe Array[Byte](8, 1, 8, 2, 8, 3, 8, 4)
     }
+    "write a message with Seq to Protobuf" in {
+      case class RepeatedMessage(values: Seq[Int])
+      val message = RepeatedMessage(Seq(1, 2, 3, 4))
+      message.toPB shouldBe Array[Byte](8, 1, 8, 2, 8, 3, 8, 4)
+    }
     "write a Map to Protobuf" in {
       case class MapMessage(values: Map[Int, String])
       val message = MapMessage(Map(1 -> "one", 2 -> "two"))
       message.toPB shouldBe Array[Byte](10, 7, 8, 1, 18, 3, 111, 110, 101, 10, 7, 8, 2, 18, 3, 116,
         119, 111)
+    }
+    "write a scala.collection.Map to Protobuf" in {
+      case class MapMessage(values: collection.Map[Int, String])
+      val message = MapMessage(collection.Map(1 -> "one", 2 -> "two"))
+      message.toPB shouldBe Array[Byte](10, 7, 8, 1, 18, 3, 111, 110, 101, 10, 7, 8, 2, 18, 3, 116, 119, 111)
     }
     "write a nested message to Protobuf" in {
       case class InnerMessage(value: Option[Int])
