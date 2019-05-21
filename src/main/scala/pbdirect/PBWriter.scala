@@ -53,6 +53,14 @@ trait PBWriterImplicits extends LowPriorityPBWriterImplicits {
     override def writeTo(index: Int, value: Boolean, out: CodedOutputStream): Unit =
       out.writeBool(index, value)
   }
+  implicit object ByteWriter extends PBWriter[Byte] {
+    override def writeTo(index: Int, value: Byte, out: CodedOutputStream): Unit =
+      out.writeInt32(index, value)
+  }
+  implicit object ShortWriter extends PBWriter[Short] {
+    override def writeTo(index: Int, value: Short, out: CodedOutputStream): Unit =
+      out.writeInt32(index, value)
+  }
   implicit object IntWriter extends PBWriter[Int] {
     override def writeTo(index: Int, value: Int, out: CodedOutputStream): Unit =
       out.writeInt32(index, value)
@@ -84,6 +92,14 @@ trait PBWriterImplicits extends LowPriorityPBWriterImplicits {
     }
   implicit def mapWriter[K, V](implicit writer: PBWriter[List[(K, V)]]): PBWriter[Map[K, V]] =
     instance { (index: Int, value: Map[K, V], out: CodedOutputStream) =>
+      writer.writeTo(index, value.toList, out)
+    }
+  implicit def collectionMapWriter[K, V](implicit writer: PBWriter[List[(K, V)]]): PBWriter[collection.Map[K, V]] =
+    instance { (index: Int, value: collection.Map[K, V], out: CodedOutputStream) =>
+      writer.writeTo(index, value.toList, out)
+    }
+  implicit def seqWriter[A](implicit writer: PBWriter[List[A]]): PBWriter[Seq[A]] =
+    instance { (index: Int, value: Seq[A], out: CodedOutputStream) =>
       writer.writeTo(index, value.toList, out)
     }
   implicit def enumWriter[E](implicit values: Enum.Values[E], ordering: Ordering[E]): PBWriter[E] =

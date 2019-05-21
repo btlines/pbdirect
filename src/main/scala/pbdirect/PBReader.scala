@@ -60,6 +60,14 @@ object PBReader extends PBReaderImplicits {
   implicit object BooleanReader$ extends PBReader[Boolean] {
     override def read(input: CodedInputStream): Boolean = input.readBool()
   }
+  // Stored as variants, but larger in memory: https://groups.google.com/forum/#!topic/protobuf/Er39mNGnRWU
+  implicit object ByteReader$ extends PBReader[Byte] {
+    override def read(input: CodedInputStream): Byte = input.readInt32().toByte
+  }
+  // Stored as variants, but larger in memory: https://groups.google.com/forum/#!topic/protobuf/Er39mNGnRWU
+  implicit object ShortReader$ extends PBReader[Short] {
+    override def read(input: CodedInputStream): Short = input.readInt32().toShort
+  }
   implicit object IntReader$ extends PBReader[Int] {
     override def read(input: CodedInputStream): Int = input.readInt32()
   }
@@ -158,6 +166,14 @@ trait PBParserImplicits extends LowPriorityPBParserImplicits {
   implicit def mapParser[K, V](implicit parser: PBParser[List[(K, V)]]): PBParser[Map[K, V]] =
     instance { (index: Int, bytes: Array[Byte]) =>
       parser.parse(index, bytes).toMap
+    }
+  implicit def collectionMapParser[K, V](implicit parser: PBParser[List[(K, V)]]): PBParser[collection.Map[K, V]] =
+    instance { (index: Int, bytes: Array[Byte]) =>
+      parser.parse(index, bytes).toMap
+    }
+  implicit def seqParser[A](implicit parser: PBParser[List[A]]): PBParser[Seq[A]] =
+    instance { (index: Int, bytes: Array[Byte]) =>
+      parser.parse(index, bytes)
     }
 }
 
