@@ -1,5 +1,6 @@
 package pbdirect
 
+import cats.data.{NonEmptyList => NEL}
 import cats.Functor
 import cats.{Contravariant, Invariant}
 import com.google.protobuf.{CodedInputStream, CodedOutputStream}
@@ -20,7 +21,7 @@ object PBFormat extends PBFormatImplicits {
   def apply[A](implicit reader: PBReader[A], writer: PBWriter[A]): PBFormat[A] =
     new PBFormat[A] {
       override def read(input: CodedInputStream): A = reader.read(input)
-      override def writeTo(index: Int, value: A, out: CodedOutputStream): Unit =
+      override def writeTo(index: NEL[Int], value: A, out: CodedOutputStream): Unit =
         writer.writeTo(index, value, out)
     }
 }

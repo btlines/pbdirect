@@ -1,13 +1,14 @@
 import java.io.ByteArrayOutputStream
 
+import cats.data.{NonEmptyList => NEL}
 import com.google.protobuf.{ CodedInputStream, CodedOutputStream }
 
 package object pbdirect {
-  implicit class PBWriterOps[A](private val a: A) extends AnyVal {
+  implicit class PBWriterOps[A <: AnyRef](private val a: A) extends AnyVal {
     def toPB(implicit writer: PBWriter[A]): Array[Byte] = {
       val out = new ByteArrayOutputStream()
       val pbOut = CodedOutputStream.newInstance(out)
-      writer.writeTo(1, a, pbOut)
+      writer.writeTo(NEL.one(1), a, pbOut)
       pbOut.flush()
       val bytes = out.toByteArray
       // remove the tag and return the content
@@ -23,7 +24,7 @@ package object pbdirect {
       val pbOut = CodedOutputStream.newInstance(out)
       pbOut.writeByteArray(1, bytes)
       pbOut.flush()
-      reader.parse(1, out.toByteArray)
+      reader.parse(NEL.one(1), out.toByteArray)
     }
   }
 }
