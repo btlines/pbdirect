@@ -2,8 +2,8 @@ dist: trusty
 language: scala
 jdk: openjdk8
 scala:
-    - 2.11.11
-    - 2.12.4
+    - 2.11.12
+    - 2.12.8
 
 script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport
