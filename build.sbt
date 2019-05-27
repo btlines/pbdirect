@@ -10,8 +10,12 @@ libraryDependencies ++= Seq(
   "com.chuusai"         %% "shapeless"     % "2.3.3",
   "org.typelevel"       %% "cats-core"     % "1.6.0",
   "com.google.protobuf" %  "protobuf-java" % "3.7.1",
-  "org.scalatest"       %% "scalatest"     % "3.0.7" % Test
+  "org.scalatest"       %% "scalatest"     % "3.0.7" % Test,
+  "com.storm-enroute"   %% "scalameter"    % "0.17"  % Test
 )
+
+resolvers += "Sonatype OSS Snapshots" at
+  "https://oss.sonatype.org/content/repositories/releases"
 
 organization := "beyondthelines"
 

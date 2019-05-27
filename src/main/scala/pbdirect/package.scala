@@ -1,13 +1,15 @@
 import java.io.ByteArrayOutputStream
+import java.util
 
-import com.google.protobuf.{ CodedInputStream, CodedOutputStream }
+import com.google.protobuf.{CodedInputStream, CodedOutputStream}
 
 package object pbdirect {
   implicit class PBWriterOps[A](private val a: A) extends AnyVal {
     def toPB(implicit writer: PBWriter[A]): Array[Byte] = {
       val out = new ByteArrayOutputStream()
       val pbOut = CodedOutputStream.newInstance(out)
-      writer.writeTo(1, a, pbOut)
+      val sizes = new util.IdentityHashMap[Any, Int]()
+      writer.writeTo(1, a, pbOut, sizes)
       pbOut.flush()
       val bytes = out.toByteArray
       // remove the tag and return the content

@@ -26,6 +26,11 @@ class PBWriterSpec extends WordSpecLike with Matchers {
       val message = IntMessage(Some(5))
       message.toPB shouldBe Array[Byte](8, 5)
     }
+    "write a multi-byte Int to Protobuf" in {
+      case class IntMessage(value: Option[Int])
+      val message = IntMessage(Some(150))
+      message.toPB shouldBe Array[Byte](8, -106, 1)
+    }
     "write a Long to Protobuf" in {
       case class LongMessage(value: Option[Long])
       val message = LongMessage(Some(Int.MaxValue.toLong + 1))
