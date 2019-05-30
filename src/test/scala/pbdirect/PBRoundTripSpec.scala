@@ -115,5 +115,10 @@ class PBRoundTripSpec extends WordSpecLike with Matchers {
       val value = NestedMultiMessage[Int, LargeMessage](0, LargeMessage())
       value.toPB.pbTo[NestedMultiMessage[Int, LargeMessage]] shouldBe value
     }
+    
+    "preserve a wrapper(wrapper(wrapper(optional int)))" in {
+      val value = NestedMessage(NestedMessage(NestedMessage(Some(5))))
+      value.toPB.pbTo[NestedMessage[NestedMessage[NestedMessage[Option[Int]]]]] shouldBe value
+    }
   }
 }
