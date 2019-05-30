@@ -132,9 +132,12 @@ class PBWriterSpec extends WordSpecLike with Matchers {
     "write a nested sealed trait to Protobuf" in {
       sealed trait Message
       case class IntMessage(value: Option[Int]) extends Message
+      case class StringMessage(value: Option[String]) extends Message 
       case class NestedMessage(value: Message)
-      val message = NestedMessage(IntMessage(Some(5)))
-      message.toPB shouldBe Array[Byte](10, 2, 8, 5)
+      val intMessage = NestedMessage(IntMessage(Some(5)))
+      intMessage.toPB shouldBe Array[Byte](10, 2, 8, 5)
+      val stringMessage = NestedMessage(StringMessage(Some("Hello")))
+      stringMessage.toPB shouldBe Array[Byte](10, 7, 10, 5, 72, 101, 108, 108, 111)
     }
     "write a message with repeated nested message in Protobuf" in {
       case class Metric(metric: String, microservice: String, node: String, value: Float, count: Int)

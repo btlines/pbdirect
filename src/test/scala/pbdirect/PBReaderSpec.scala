@@ -127,9 +127,12 @@ class PBReaderSpec extends WordSpecLike with Matchers {
     "read a nested sealed trait from Protobuf" in {
       sealed trait Message
       case class IntMessage(value: Option[Int]) extends Message
+      case class StringMessage(value: Option[String]) extends Message
       case class NestedMessage(value: Message)
-      val messageBytes = Array[Byte](10, 2, 8, 5)
-      messageBytes.pbTo[NestedMessage] shouldBe NestedMessage(IntMessage(Some(5)))
+      val intBytes = Array[Byte](10, 2, 8, 5)
+      intBytes.pbTo[NestedMessage] shouldBe NestedMessage(IntMessage(Some(5)))
+      val stringBytes = Array[Byte](10, 7, 10, 5, 72, 101, 108, 108, 111)
+      stringBytes.pbTo[NestedMessage] shouldBe NestedMessage(StringMessage(Some("Hello")))
     }
     "read a message with repeated nested message from Protobuf" in {
       case class Metric(name: String, service: String, node: String, value: Float, count: Int)
