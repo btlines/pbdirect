@@ -9,6 +9,7 @@ object PBReaderBenchmark extends Bench.LocalTime {
   // The following microbenchmarking tests a very specific scenario: Reading
   // a case class with many fields.
   /////////////////////////////////////////////////////////////////////////////
+  
   def make4Tuple(payload: Array[Byte]): Tuple4[Array[Byte], Array[Byte], Array[Byte], Array[Byte]] = {
     (
     payload.clone,
@@ -80,6 +81,18 @@ object PBReaderBenchmark extends Bench.LocalTime {
     measure method "pbTo" in {
       using(sixteenWide) in {
         d => d.pbTo[Tuple16[Array[Byte], Array[Byte], Array[Byte], Array[Byte], Array[Byte], Array[Byte], Array[Byte], Array[Byte], Array[Byte], Array[Byte], Array[Byte], Array[Byte], Array[Byte], Array[Byte], Array[Byte], Array[Byte]]]
+      }
+    }
+  }
+  
+  private val counts = Gen.range("count")(10000, 100000, 10000)
+  case class Message[V](v: V)
+  private val smallStrings = for (count <- counts) yield Array.fill(count)(Message("Hello!").toPB)
+  
+  performance of "many small objects" in {
+    measure method "pbTo" in {
+      using(smallStrings) in {
+        data => data.map(_.pbTo[Message[String]])
       }
     }
   }
