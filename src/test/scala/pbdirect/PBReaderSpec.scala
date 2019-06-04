@@ -79,6 +79,11 @@ class PBReaderSpec extends WordSpecLike with Matchers {
       val bytes = Array[Byte]()
       bytes.pbTo[EmptyMessage] shouldBe EmptyMessage()
     }
+    "read a message with single missing field from Protobuf" in {
+      case class MissingMessage(text: Option[String])
+      val bytes = Array[Byte]()
+      bytes.pbTo[MissingMessage] shouldBe MissingMessage(None)
+    }
     "read a multi-field message from Protobuf" in {
       case class MultiMessage(text: Option[String], number: Option[Int])
       val bytes = Array[Byte](10, 5, 72, 101, 108, 108, 111, 16, 3)
