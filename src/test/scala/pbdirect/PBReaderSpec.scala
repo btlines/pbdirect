@@ -143,6 +143,13 @@ class PBReaderSpec extends WordSpecLike with Matchers {
       val bytes = Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114, 111, 115, 101, 114, 118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40, -71, 96)
       bytes.pbTo[Metrics] shouldBe message
     }
+    "read a message with nested repeated message from Protobuf" in {
+      case class ListOfLists(v: List[ListOfInt])
+      case class ListOfInt(v: List[Int])
+      val message = ListOfLists(List(ListOfInt(List(1, 2)), ListOfInt(List(3, 4))))
+      val bytes = Array[Byte](10, 4, 8, 1, 8, 2, 10, 4, 8, 3, 8, 4)
+      bytes.pbTo[ListOfLists] shouldBe message
+    }
     "derive new instance using map" in {
       import java.time.Instant
       import cats.syntax.functor._

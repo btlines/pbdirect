@@ -111,15 +111,25 @@ trait LowPriorityPBParserImplicits {
     override def readFieldWithoutTag(input: CodedInputStream, size: Option[Int]): Unit = {
       value = Some(readF(input, size))
     }
-    override def build: A = value.get
+    override def build: A = {
+      val v = value.get
+      value = None
+      v
+    }
   }
   
   def possiblyRepeatedParser[A, B](sizeHint: Int)(readFieldWithoutTagF: (CodedInputStream, Option[Int]) => A)(builder: mutable.IndexedSeq[A] => B): PBParser[B] = new PBParser[B] {
-    private var values: mutable.ArrayBuffer[A] = new ArrayBuffer[A](sizeHint)
+    private var values: mutable.ArrayBuffer[A] = null
     override def readFieldWithoutTag(input: CodedInputStream, size: Option[Int]): Unit = {
+      if (values == null) values = new ArrayBuffer[A](sizeHint)
       values += readFieldWithoutTagF(input, size)
     }
-    override def build: B = builder(values)
+    override def build: B = {
+      if (values == null) values = new ArrayBuffer[A](initialSize=0)
+      val v = builder(values)
+      values = null
+      v
+    }
   }
   def possiblyRepeatedParserWithReader[A, B](sizeHint: Int)(reader: PBReader[A])(builder: mutable.IndexedSeq[A] => B): PBParser[B] =
     possiblyRepeatedParser(sizeHint)(reader.read)(builder)
