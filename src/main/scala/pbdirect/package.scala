@@ -20,7 +20,7 @@ package object pbdirect {
   }
   implicit class PBParserOps(private val bytes: Array[Byte]) extends AnyVal {
     def pbTo[A](implicit parser: PBParser[A]): A = {
-      parser.readSingleFieldAndBuild(CodedInputStream.newInstance(bytes), isTopLevel=true)
+      parser.readSingleFieldAndBuild(CodedInputStream.newInstance(bytes), size=Some(bytes.length))
     }
   }
 }

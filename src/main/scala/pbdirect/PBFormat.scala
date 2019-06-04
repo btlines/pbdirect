@@ -20,7 +20,7 @@ trait PBFormatImplicits {
 object PBFormat extends PBFormatImplicits {
   def apply[A](implicit reader: PBReader[A], writer: PBWriter[A]): PBFormat[A] =
     new PBFormat[A] {
-      override def read(input: CodedInputStream, isTopLevel: Boolean): A = reader.read(input, isTopLevel)
+      override def read(input: CodedInputStream, size: Option[Int]): A = reader.read(input, size)
       override def writeTo(index: Int, value: A, out: CodedOutputStream, sizes: SizeMap): Unit =
         writer.writeTo(index, value, out, sizes)
       override def writtenBytesSize(index: Int, value: A, sizes: SizeMap): Int =
