@@ -114,15 +114,15 @@ trait LowPriorityPBParserImplicits {
     override def build: A = value.get
   }
   
-  def possiblyRepeatedParser[A, B](readFieldWithoutTagF: (CodedInputStream, Option[Int]) => A)(builder: mutable.IndexedSeq[A] => B): PBParser[B] = new PBParser[B] {
-    private var values: mutable.ArrayBuffer[A] = new ArrayBuffer[A]()
+  def possiblyRepeatedParser[A, B](sizeHint: Int)(readFieldWithoutTagF: (CodedInputStream, Option[Int]) => A)(builder: mutable.IndexedSeq[A] => B): PBParser[B] = new PBParser[B] {
+    private var values: mutable.ArrayBuffer[A] = new ArrayBuffer[A](sizeHint)
     override def readFieldWithoutTag(input: CodedInputStream, size: Option[Int]): Unit = {
       values += readFieldWithoutTagF(input, size)
     }
     override def build: B = builder(values)
   }
-  def possiblyRepeatedParserWithReader[A, B](reader: PBReader[A])(builder: mutable.IndexedSeq[A] => B): PBParser[B] =
-    possiblyRepeatedParser(reader.read)(builder)
+  def possiblyRepeatedParserWithReader[A, B](sizeHint: Int)(reader: PBReader[A])(builder: mutable.IndexedSeq[A] => B): PBParser[B] =
+    possiblyRepeatedParser(sizeHint)(reader.read)(builder)
   
   implicit def cconsParser[H, T <: Coproduct](implicit
     head: PBParser[H],
@@ -156,11 +156,14 @@ trait LowPriorityPBParserImplicits {
     head: PBParser[H],
     tail: Lazy[PBParser[T]]
   ): PBParser[H :: T] = new PBParser[H :: T] {
+    private lazy val componentParsersVec = {
+      val numParsers = componentParsers.size
+      if (numParsers > 2) componentParsers.toIndexedSeq
+      else componentParsers
+    }
     override val componentParsers: List[PBParser[_]] = head :: tail.value.componentParsers
     
     override def readFieldWithoutTag(input: CodedInputStream, size: Option[Int]): Unit = {
-      // Top-level products have no size tag and the size limit is implicit in the
-      // byte buffer's size.
       val sizeLimit = size match {
         // Our parent provided our size, which is a signal that the size field
         // is not in the stream.
@@ -172,8 +175,7 @@ trait LowPriorityPBParserImplicits {
       
       val oldLimit = input.pushLimit(sizeLimit)
       
-      val parsers = componentParsers.toIndexedSeq
-      val numParsers = parsers.length
+      val numParsers = componentParsersVec.size
       
       var done = false
       var numInputsRead = 0
@@ -185,7 +187,7 @@ trait LowPriorityPBParserImplicits {
         } else if (oneBasedIndex > numParsers) {
           input.skipField(tag)
         } else {
-          parsers(oneBasedIndex-1).readFieldWithoutTag(input, size=None)
+          componentParsersVec(oneBasedIndex-1).readFieldWithoutTag(input, size=None)
         }
         numInputsRead += 1
       }
@@ -203,20 +205,28 @@ trait LowPriorityPBParserImplicits {
 }
 
 trait PBParserImplicits extends LowPriorityPBParserImplicits {
+  private val SINGLETON_SIZE_HINT = 1
+  private val COLLECTION_SIZE_HINT = 16
+  
   implicit def repeatedParser[A](implicit reader: PBReader[A]): PBParser[List[A]] =
-    possiblyRepeatedParserWithReader(reader) { values: mutable.IndexedSeq[A] => values.toList }
+    possiblyRepeatedParserWithReader(sizeHint=COLLECTION_SIZE_HINT)(reader) { values: mutable.IndexedSeq[A] => values.toList }
   implicit def requiredParser[A](implicit reader: PBReader[A]): PBParser[A] =
-    possiblyRepeatedParserWithReader(reader) { values: mutable.IndexedSeq[A] => values.last }
+    possiblyRepeatedParserWithReader(sizeHint=SINGLETON_SIZE_HINT)(reader) { values: mutable.IndexedSeq[A] => values.last }
   implicit def optionalParser[A](implicit reader: PBReader[A]): PBParser[Option[A]] =
-    possiblyRepeatedParserWithReader(reader) { values: mutable.IndexedSeq[A] => values.lastOption }
+    possiblyRepeatedParserWithReader(sizeHint=SINGLETON_SIZE_HINT)(reader) { values: mutable.IndexedSeq[A] => values.lastOption }
   implicit def mapParser[K, V](implicit reader: PBReader[(K, V)]): PBParser[Map[K, V]] =
-    possiblyRepeatedParserWithReader(reader) { values: mutable.IndexedSeq[(K, V)] => values.toMap }
+    possiblyRepeatedParserWithReader(sizeHint=COLLECTION_SIZE_HINT)(reader) { values: mutable.IndexedSeq[(K, V)] => values.toMap }
   implicit def collectionMapParser[K, V](implicit reader: PBReader[(K, V)]): PBParser[collection.Map[K, V]] =
-    possiblyRepeatedParserWithReader(reader) { values: mutable.IndexedSeq[(K, V)] => values.toMap }
+    possiblyRepeatedParserWithReader(sizeHint=COLLECTION_SIZE_HINT)(reader) { values: mutable.IndexedSeq[(K, V)] =>
+      val result = mutable.HashMap.empty[K, V]
+      result.sizeHint(values) //NOTE: Seems to do nothing, unfortunately.
+      result ++= values
+      result
+    }
   implicit def seqParser[A](implicit reader: PBReader[A]): PBParser[Seq[A]] =
-    possiblyRepeatedParserWithReader(reader) { values: mutable.IndexedSeq[A] => values.toSeq}
+    possiblyRepeatedParserWithReader(sizeHint=COLLECTION_SIZE_HINT)(reader) { values: mutable.IndexedSeq[A] => values }
   implicit def indexedSeqParser[A](implicit reader: PBReader[A]): PBParser[IndexedSeq[A]] =
-    possiblyRepeatedParserWithReader(reader) { values: mutable.IndexedSeq[A] => values.toIndexedSeq }
+    possiblyRepeatedParserWithReader(sizeHint=COLLECTION_SIZE_HINT)(reader) { values: mutable.IndexedSeq[A] => values }
 }
 
 object PBParser extends PBParserImplicits
