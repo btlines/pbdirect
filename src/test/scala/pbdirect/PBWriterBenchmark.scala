@@ -1,6 +1,8 @@
 package pbdirect
 
 import org.scalameter.api._
+import cats.instances.option._
+import cats.instances.list._
 
 object PBWriterBenchmark extends Bench.LocalTime {
 
