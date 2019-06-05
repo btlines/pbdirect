@@ -13,16 +13,32 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Try
 
+/** Reads data for a single Protobuf message.  When read() is called, it is
+  * assumed that the caller has already consumed the tag for this message.
+  */
 trait PBReader[A] {
   def read(input: CodedInputStream, size: Option[Int]): A
 }
 
+/** Reads data for a single field type in a Product structure, or a whole
+  * Protobuf message.  The caller should instantiate a PBParser and then call
+  * readFieldWithoutTag once for each copy of the field to be read, after
+  * first consuming the field's tag from the CodedInputStream (or doing
+  * nothing, in the case of a whole Protobuf message).  Once all copies of the
+  * field are read, call build() exactly once to build the resulting collection
+  * of field values.
+  * 
+  * The type of collection produced by build(), and whether that collection
+  * contains all copies of the field or only a subset, is left to the
+  * implementation.  For example, for a repeated field, all copies should
+  * be kept in the order they were read.
+  */
 trait PBParser[A] {
   def readFieldWithoutTag(input: CodedInputStream, size: Option[Int]): Unit
-  def build: A
+  def build(): A
   def readSingleFieldAndBuild(input: CodedInputStream, size: Option[Int]): A = {
     readFieldWithoutTag(input, size)
-    build
+    build()
   }
   def componentParsers: List[PBParser[_]] = List(this)
 }
@@ -111,7 +127,7 @@ trait LowPriorityPBParserImplicits {
     override def readFieldWithoutTag(input: CodedInputStream, size: Option[Int]): Unit = {
       value = Some(readF(input, size))
     }
-    override def build: A = {
+    override def build(): A = {
       val v = value.get
       value = None
       v
@@ -124,7 +140,7 @@ trait LowPriorityPBParserImplicits {
       if (values == null) values = new ArrayBuffer[A](sizeHint)
       values += readFieldWithoutTagF(input, size)
     }
-    override def build: B = {
+    override def build(): B = {
       if (values == null) values = new ArrayBuffer[A](initialSize=0)
       val v = builder(values)
       values = null
@@ -158,7 +174,7 @@ trait LowPriorityPBParserImplicits {
   implicit val cnilParser: PBParser[CNil] = new PBParser[CNil] {
     override def readFieldWithoutTag(input: CodedInputStream, size: Option[Int]): Unit =
       throw new UnsupportedOperationException("Can't read HNil")
-    override def build: CNil = throw new UnsupportedOperationException("Can't build CNil")
+    override def build(): CNil = throw new UnsupportedOperationException("Can't build CNil")
     override def componentParsers: List[PBParser[_]] = Nil
   }
   
@@ -205,11 +221,11 @@ trait LowPriorityPBParserImplicits {
       input.popLimit(oldLimit)
     }
     
-    override def build: H :: T = head.build :: tail.value.build
+    override def build(): H :: T = head.build :: tail.value.build
   }
   implicit val hnilParser: PBParser[HNil] = new PBParser[HNil] {
     override def readFieldWithoutTag(input: CodedInputStream, size: Option[Int]): Unit = ()
-    override def build: HNil = HNil
+    override def build(): HNil = HNil
     override def componentParsers: List[PBParser[_]] = Nil
   }
 }
