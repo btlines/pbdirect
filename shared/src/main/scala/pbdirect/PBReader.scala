@@ -436,11 +436,11 @@ trait PBParserImplicits extends PBConsParser16 {
       parser.parse(index, bytes).toMap
     }
   implicit def collectionMapParser[K, V](implicit parser: PBParser[List[(K, V)]]): PBParser[collection.Map[K, V]] =
-    instance { (index: Int, bytes: Array[Byte]) =>
+    instance { (index: NEL[Int], bytes: Array[Byte]) =>
       parser.parse(index, bytes).toMap
     }
   implicit def seqParser[A](implicit parser: PBParser[List[A]]): PBParser[Seq[A]] =
-    instance { (index: Int, bytes: Array[Byte]) =>
+    instance { (index: NEL[Int], bytes: Array[Byte]) =>
       parser.parse(index, bytes)
     }
 }
