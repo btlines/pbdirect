@@ -2,9 +2,9 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 val pbdirect = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
+  .enablePlugins(GitVersioning)
   .settings(
     name := "pbdirect",
-    version := "0.0.10",
     scalaVersion := "2.12.8",
     crossScalaVersions := Seq("2.11.12", "2.12.8"),
     libraryDependencies ++= Seq(
@@ -16,6 +16,7 @@ val pbdirect = crossProject(JSPlatform, JVMPlatform)
     licenses := ("MIT", url("http://opensource.org/licenses/MIT")) :: Nil,
     bintrayOrganization := Some("beyondthelines"),
     bintrayPackageLabels := Seq("scala", "protobuf"),
+    git.useGitDescribe := true
   )
   .jvmSettings(
     libraryDependencies ++= Seq(
