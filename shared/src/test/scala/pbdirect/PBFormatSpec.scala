@@ -26,12 +26,43 @@ class PBFormatSpec extends WordSpec with Matchers {
     }
     "format a case class with many fields" in {
       case class Record(
-        _1: Int, _2: Int, _3: Int, _4: Int, _5: Int, _6: Int, _7: Int, _8: Int, _9: Int, _10: Int, _11: Int, 
-        _12: Int, _13: Int, _14: Int, _15: Int, _16: Int, _17: Int, _18: Int, _19: Int, _20: Int, _21: Int,
-        _22: Int, _23: Int, _24: Int, _25: Int, _26: Int, _27: Int, _28: Int, _29: Int, _30: Int, _31: Int
+        _1: Int,
+        _2: Int,
+        _3: Int,
+        _4: Int,
+        _5: Int,
+        _6: Int,
+        _7: Int,
+        _8: Int,
+        _9: Int,
+        _10: Int,
+        _11: Int,
+        _12: Int,
+        _13: Int,
+        _14: Int,
+        _15: Int,
+        _16: Int,
+        _17: Int,
+        _18: Int,
+        _19: Int,
+        _20: Int,
+        _21: Int,
+        _22: Int,
+        _23: Int,
+        _24: Int,
+        _25: Int,
+        _26: Int,
+        _27: Int,
+        _28: Int,
+        _29: Int,
+        _30: Int,
+        _31: Int
       )
-      val record = Record(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31)
-      val bytes = Array[Byte](8, 1, 16, 2, 24, 3, 32, 4, 40, 5, 48, 6, 56, 7, 64, 8, 72, 9, 80, 10, 88, 11, 96, 12, 104, 13, 112, 14, 120, 15, -128, 1, 16, -120, 1, 17, -112, 1, 18, -104, 1, 19, -96, 1, 20, -88, 1, 21, -80, 1, 22, -72, 1, 23, -64, 1, 24, -56, 1, 25, -48, 1, 26, -40, 1, 27, -32, 1, 28, -24, 1, 29, -16, 1, 30, -8, 1, 31)
+      val record = Record(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+        27, 28, 29, 30, 31)
+      val bytes = Array[Byte](8, 1, 16, 2, 24, 3, 32, 4, 40, 5, 48, 6, 56, 7, 64, 8, 72, 9, 80, 10, 88, 11, 96, 12, 104,
+        13, 112, 14, 120, 15, -128, 1, 16, -120, 1, 17, -112, 1, 18, -104, 1, 19, -96, 1, 20, -88, 1, 21, -80, 1, 22,
+        -72, 1, 23, -64, 1, 24, -56, 1, 25, -48, 1, 26, -40, 1, 27, -32, 1, 28, -24, 1, 29, -16, 1, 30, -8, 1, 31)
       record.toPB shouldBe bytes
       bytes.pbTo[Record] shouldBe record
     }
@@ -153,7 +184,7 @@ class PBFormatSpec extends WordSpec with Matchers {
       r15Bytes.pbTo[Record] shouldBe r15
       val r16 = R16(16)
       val r16Bytes = Array[Byte](-128, 1, 16)
-      (r16 :Record).toPB shouldBe r16Bytes
+      (r16: Record).toPB shouldBe r16Bytes
       r16Bytes.pbTo[Record] shouldBe r16
       val r17 = R17(17)
       val r17Bytes = Array[Byte](-120, 1, 17)

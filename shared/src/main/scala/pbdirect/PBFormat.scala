@@ -18,6 +18,7 @@ trait PBFormatImplicits {
 }
 
 object PBFormat extends PBFormatImplicits {
+
   def apply[A](implicit reader: PBReader[A], writer: PBWriter[A]): PBFormat[A] =
     new PBFormat[A] {
       override def read(input: CodedInputStream): A = reader.read(input)

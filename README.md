@@ -50,8 +50,8 @@ PBDirect serialises case classes into protobuf and there is no need for a .proto
 
 ```scala
 case class MyMessage(
-  id: Option[Int], 
-  text: Option[String], 
+  id: Option[Int],
+  text: Option[String],
   numbers: List[Int]
 )
 ```
@@ -90,6 +90,50 @@ This method is added implicitly on all `Array[Byte]` by importing `pbdirect._`.
 val bytes: Array[Byte] = Array[Byte](8, 123, 18, 5, 72, 101, 108, 108, 111, 24, 1, 32, 2, 40, 3, 48, 4)
 val message = bytes.pbTo[MyMessage]
 ```
+
+### Indexing
+
+The protobuf indexes reflects directly the order of the fields declaration. E.g.
+
+```scala
+case class MyMessage(
+  id: Option[Int],
+  text: Option[String],
+  numbers: List[Int]
+)
+```
+
+is equivalent to the following protobuf definition:
+
+```protobuf
+message MyMessage {
+   optional int32  id      = 1;
+   optional string text    = 2;
+   repeated int32  numbers = 3;
+}
+```
+
+It's possible to specify the protobuf index by using the `@Index` annotation.
+
+```scala
+case class MyMessage(
+  @Index(10) id: Option[Int],
+  @Index(20) text: Option[String],
+  @Index(30) numbers: List[Int]
+)
+```
+
+is equivalent to the following protobuf definition:
+
+```protobuf
+message MyMessage {
+   optional int32  id      = 10;
+   optional string text    = 20;
+   repeated int32  numbers = 30;
+}
+```
+
+This is particularly useful to model an ADT where several members have the same generic type (i.e the same `HList`)
 
 ## Extension
 

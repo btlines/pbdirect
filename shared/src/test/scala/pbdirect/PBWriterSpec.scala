@@ -2,7 +2,7 @@ package pbdirect
 
 import cats.instances.option._
 import cats.instances.list._
-import org.scalatest.{ Matchers, WordSpecLike }
+import org.scalatest.{Matchers, WordSpecLike}
 
 class PBWriterSpec extends WordSpecLike with Matchers {
   "PBWriter" should {
@@ -72,7 +72,7 @@ class PBWriterSpec extends WordSpecLike with Matchers {
     "write a required field to Protobuf" in {
       case class RequiredMessage(value: Int)
       val message = RequiredMessage(5)
-      message.toPB shouldBe Array[Byte](8 , 5)
+      message.toPB shouldBe Array[Byte](8, 5)
     }
     "write an empty message to Protobuf" in {
       case class EmptyMessage()
@@ -139,7 +139,8 @@ class PBWriterSpec extends WordSpecLike with Matchers {
       val message = Metrics(
         Metric("metric", "microservices", "node", 12F, 12345) :: Nil
       )
-      message.toPB shouldBe Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114, 111, 115, 101, 114, 118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40, -71, 96)
+      message.toPB shouldBe Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114, 111, 115,
+        101, 114, 118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40, -71, 96)
     }
     "derive new instance using contramap" in {
       import java.time.Instant

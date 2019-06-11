@@ -13,12 +13,15 @@ import scala.util.Try
 trait PBReader[A] {
   def read(input: CodedInputStream): A
 }
+
 trait LowerPriorityPBReaderImplicits {
+
   def instance[A](f: CodedInputStream => A): PBReader[A] =
     new PBReader[A] {
       override def read(input: CodedInputStream): A = f(input)
     }
-  implicit def coprodReader[A, R <: Coproduct](implicit
+  implicit def coprodReader[A, R <: Coproduct](
+    implicit
     gen: Generic.Aux[A, R],
     repr: Lazy[PBParser[R]]
   ): PBReader[A] = instance { (input: CodedInputStream) =>
@@ -32,9 +35,11 @@ trait LowerPriorityPBReaderImplicits {
     gen.from(repr.value.parse(NEL.one(1), out.toByteArray))
   }
 }
+
 trait PBReaderImplicits extends LowerPriorityPBReaderImplicits {
 
-  implicit def prodReader[A, R <: HList, I <: HList](implicit
+  implicit def prodReader[A, R <: HList, I <: HList](
+    implicit
     gen: Generic.Aux[A, R],
     repr: Lazy[PBParser[R]],
     annotations: Annotations.Aux[Index, A, I],
@@ -42,24 +47,28 @@ trait PBReaderImplicits extends LowerPriorityPBReaderImplicits {
   ): PBReader[A] = instance { (input: CodedInputStream) =>
     val bytes = input.readByteArray()
     val annotationList = toList(annotations())
-    val index = NEL.fromList(
-      (1 to annotationList.size).toList.zip(annotationList).map {
-        case (i, None) => i
-        case (_, Some(Index(i))) => i
-      }
-    ).getOrElse(NEL.one(1))
-    
+    val index = NEL
+      .fromList(
+        (1 to annotationList.size).toList.zip(annotationList).map {
+          case (i, None)           => i
+          case (_, Some(Index(i))) => i
+        }
+      )
+      .getOrElse(NEL.one(1))
+
     gen.from(repr.value.parse(index, bytes))
   }
 
-  implicit def enumReader[A](implicit
+  implicit def enumReader[A](
+    implicit
     values: Enum.Values[A],
     ordering: Ordering[A],
     reader: PBReader[Int]
   ): PBReader[A] = instance { (input: CodedInputStream) =>
     Enum.fromInt[A](reader.read(input))
   }
-  implicit def enumerationReader[E <: Enumeration](implicit
+  implicit def enumerationReader[E <: Enumeration](
+    implicit
     reader: PBReader[Int],
     gen: Generic.Aux[E, HNil]
   ): PBReader[E#Value] = instance { (input: CodedInputStream) =>
@@ -67,6 +76,7 @@ trait PBReaderImplicits extends LowerPriorityPBReaderImplicits {
     enum(reader.read(input))
   }
 }
+
 object PBReader extends PBReaderImplicits {
   implicit object BooleanReader$ extends PBReader[Boolean] {
     override def read(input: CodedInputStream): Boolean = input.readBool()
@@ -98,11 +108,11 @@ object PBReader extends PBReaderImplicits {
     override def read(input: CodedInputStream): Array[Byte] = input.readByteArray()
   }
 
-  def apply[A : PBReader]: PBReader[A] = implicitly
+  def apply[A: PBReader]: PBReader[A] = implicitly
 
   implicit val functorReader: Functor[PBReader] = new Functor[PBReader] {
-    override def map[A, B](reader: PBReader[A])(f: A => B): PBReader[B] = instance {
-      (input: CodedInputStream) => f(reader.read(input))
+    override def map[A, B](reader: PBReader[A])(f: A => B): PBReader[B] = instance { (input: CodedInputStream) =>
+      f(reader.read(input))
     }
   }
 }
@@ -112,22 +122,23 @@ trait PBParser[A] {
 }
 
 trait LowPriorityPBParserImplicits {
+
   def instance[A](f: (NEL[Int], Array[Byte]) => A): PBParser[A] = new PBParser[A] {
     override def parse(index: NEL[Int], bytes: Array[Byte]): A = f(index, bytes)
   }
-  implicit val hnilParser: PBParser[HNil] = instance {
-    (index: NEL[Int], bytes: Array[Byte]) => HNil
+  implicit val hnilParser: PBParser[HNil] = instance { (index: NEL[Int], bytes: Array[Byte]) =>
+    HNil
   }
 
-  implicit val cnilParser: PBParser[CNil] = instance {
-    (index: NEL[Int], bytes: Array[Byte]) =>
-      throw new UnsupportedOperationException("Can't read CNil")
+  implicit val cnilParser: PBParser[CNil] = instance { (index: NEL[Int], bytes: Array[Byte]) =>
+    throw new UnsupportedOperationException("Can't read CNil")
   }
 }
 
 trait PBConsParser extends LowPriorityPBParserImplicits {
   implicit def consParser[H, T <: HList](
-    implicit head: PBParser[H], tail: Lazy[PBParser[T]]
+    implicit head: PBParser[H],
+    tail: Lazy[PBParser[T]]
   ): PBParser[H :: T] =
     instance { (index: NEL[Int], bytes: Array[Byte]) =>
       val remainingIndex = NEL.fromList(index.tail).getOrElse(NEL.one(1))
@@ -135,7 +146,8 @@ trait PBConsParser extends LowPriorityPBParserImplicits {
     }
 
   implicit def cconsParser[H, T <: Coproduct](
-    implicit head: PBParser[H], tail: Lazy[PBParser[T]]
+    implicit head: PBParser[H],
+    tail: Lazy[PBParser[T]]
   ): PBParser[H :+: T] =
     instance { (index: NEL[Int], bytes: Array[Byte]) =>
       Try {
@@ -148,7 +160,9 @@ trait PBConsParser extends LowPriorityPBParserImplicits {
 
 trait PBConsParser2 extends PBConsParser {
   implicit def consParser2[H1, H2, T <: HList](
-    implicit h1: PBParser[H1], h2: PBParser[H2], tail: Lazy[PBParser[T]]
+    implicit h1: PBParser[H1],
+    h2: PBParser[H2],
+    tail: Lazy[PBParser[T]]
   ): PBParser[H1 :: H2 :: T] =
     instance { (index: NEL[Int], bytes: Array[Byte]) =>
       val index1 = NEL.fromList(index.tail).getOrElse(NEL.one(1))
@@ -157,7 +171,9 @@ trait PBConsParser2 extends PBConsParser {
     }
 
   implicit def cconsParser2[H1, H2, T <: Coproduct](
-    implicit h1: PBParser[H1], h2: PBParser[H2], tail: Lazy[PBParser[T]]
+    implicit h1: PBParser[H1],
+    h2: PBParser[H2],
+    tail: Lazy[PBParser[T]]
   ): PBParser[H1 :+: H2 :+: T] =
     instance { (index: NEL[Int], bytes: Array[Byte]) =>
       Try {
@@ -185,10 +201,10 @@ trait PBConsParser4 extends PBConsParser2 {
       val index3 = NEL.fromList(index2.tail).getOrElse(NEL.one(1))
       val index4 = NEL.fromList(index3.tail).getOrElse(NEL.one(1))
       h1.parse(index, bytes) ::
-        h2.parse(index1, bytes) ::
-        h3.parse(index2, bytes) ::
-        h4.parse(index3, bytes) ::
-        tail.value.parse(index4, bytes)
+      h2.parse(index1, bytes) ::
+      h3.parse(index2, bytes) ::
+      h4.parse(index3, bytes) ::
+      tail.value.parse(index4, bytes)
     }
 
   implicit def cconsParser4[H1, H2, H3, H4, T <: Coproduct](
@@ -237,14 +253,14 @@ trait PBConsParser8 extends PBConsParser4 {
       val index7 = NEL.fromList(index6.tail).getOrElse(NEL.one(1))
       val index8 = NEL.fromList(index7.tail).getOrElse(NEL.one(1))
       h1.parse(index, bytes) ::
-        h2.parse(index1, bytes) ::
-        h3.parse(index2, bytes) ::
-        h4.parse(index3, bytes) ::
-        h5.parse(index4, bytes) ::
-        h6.parse(index5, bytes) ::
-        h7.parse(index6, bytes) ::
-        h8.parse(index7, bytes) ::
-        tail.value.parse(index8, bytes)
+      h2.parse(index1, bytes) ::
+      h3.parse(index2, bytes) ::
+      h4.parse(index3, bytes) ::
+      h5.parse(index4, bytes) ::
+      h6.parse(index5, bytes) ::
+      h7.parse(index6, bytes) ::
+      h8.parse(index7, bytes) ::
+      tail.value.parse(index8, bytes)
     }
 
   implicit def cconsParser8[H1, H2, H3, H4, H5, H6, H7, H8, T <: Coproduct](
@@ -302,7 +318,9 @@ trait PBConsParser16 extends PBConsParser8 {
     h15: PBParser[H15],
     h16: PBParser[H16],
     tail: Lazy[PBParser[T]]
-  ): PBParser[H1 :: H2 :: H3 :: H4 :: H5 :: H6 :: H7 :: H8 :: H9 :: H10 :: H11 :: H12 :: H13 :: H14 :: H15 :: H16 :: T] =
+  ): PBParser[
+    H1 :: H2 :: H3 :: H4 :: H5 :: H6 :: H7 :: H8 :: H9 :: H10 :: H11 :: H12 :: H13 :: H14 :: H15 :: H16 :: T
+  ] =
     instance { (index: NEL[Int], bytes: Array[Byte]) =>
       val index1 = NEL.fromList(index.tail).getOrElse(NEL.one(1))
       val index2 = NEL.fromList(index1.tail).getOrElse(NEL.one(1))
@@ -321,22 +339,22 @@ trait PBConsParser16 extends PBConsParser8 {
       val index15 = NEL.fromList(index14.tail).getOrElse(NEL.one(1))
       val index16 = NEL.fromList(index15.tail).getOrElse(NEL.one(1))
       h1.parse(index, bytes) ::
-        h2.parse(index1, bytes) ::
-        h3.parse(index2, bytes) ::
-        h4.parse(index3, bytes) ::
-        h5.parse(index4, bytes) ::
-        h6.parse(index5, bytes) ::
-        h7.parse(index6, bytes) ::
-        h8.parse(index7, bytes) ::
-        h9.parse(index8, bytes) ::
-        h10.parse(index9, bytes) ::
-        h11.parse(index10, bytes) ::
-        h12.parse(index11, bytes) ::
-        h13.parse(index12, bytes) ::
-        h14.parse(index13, bytes) ::
-        h15.parse(index14, bytes) ::
-        h16.parse(index15, bytes) ::
-        tail.value.parse(index16, bytes)
+      h2.parse(index1, bytes) ::
+      h3.parse(index2, bytes) ::
+      h4.parse(index3, bytes) ::
+      h5.parse(index4, bytes) ::
+      h6.parse(index5, bytes) ::
+      h7.parse(index6, bytes) ::
+      h8.parse(index7, bytes) ::
+      h9.parse(index8, bytes) ::
+      h10.parse(index9, bytes) ::
+      h11.parse(index10, bytes) ::
+      h12.parse(index11, bytes) ::
+      h13.parse(index12, bytes) ::
+      h14.parse(index13, bytes) ::
+      h15.parse(index14, bytes) ::
+      h16.parse(index15, bytes) ::
+      tail.value.parse(index16, bytes)
     }
 
   implicit def cconsParser16[H1, H2, H3, H4, H5, H6, H7, H8, H9, H10, H11, H12, H13, H14, H15, H16, T <: Coproduct](
@@ -358,7 +376,9 @@ trait PBConsParser16 extends PBConsParser8 {
     h15: PBParser[H15],
     h16: PBParser[H16],
     tail: Lazy[PBParser[T]]
-  ): PBParser[H1 :+: H2 :+: H3 :+: H4 :+: H5 :+: H6 :+: H7 :+: H8 :+: H9 :+: H10 :+: H11 :+: H12 :+: H13 :+: H14 :+: H15 :+: H16 :+: T] =
+  ): PBParser[
+    H1 :+: H2 :+: H3 :+: H4 :+: H5 :+: H6 :+: H7 :+: H8 :+: H9 :+: H10 :+: H11 :+: H12 :+: H13 :+: H14 :+: H15 :+: H16 :+: T
+  ] =
     instance { (index: NEL[Int], bytes: Array[Byte]) =>
       Try {
         Inl(h1.parse(index, bytes))
@@ -406,9 +426,9 @@ trait PBParserImplicits extends PBConsParser16 {
       var as: List[A] = Nil
       while (!done) {
         input.readTag() match {
-          case 0 => done = true
+          case 0                               => done = true
           case tag if (tag >> 3) == index.head => as ::= reader.read(input)
-          case tag => input.skipField(tag)
+          case tag                             => input.skipField(tag)
         }
       }
       as.reverse
@@ -420,9 +440,9 @@ trait PBParserImplicits extends PBConsParser16 {
       var as: List[A] = Nil
       while (!done) {
         input.readTag() match {
-          case 0 => done = true
+          case 0                               => done = true
           case tag if (tag >> 3) == index.head => as ::= reader.read(input)
-          case tag => input.skipField(tag)
+          case tag                             => input.skipField(tag)
         }
       }
       as.head

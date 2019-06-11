@@ -8,9 +8,9 @@ val pbdirect = crossProject(JSPlatform, JVMPlatform)
     scalaVersion := "2.12.8",
     crossScalaVersions := Seq("2.11.12", "2.12.8"),
     libraryDependencies ++= Seq(
-      "com.chuusai"         %%% "shapeless"     % "2.3.3",
-      "org.typelevel"       %%% "cats-core"     % "1.6.1",
-      "org.scalatest"       %%% "scalatest"     % "3.0.8" % Test
+      "com.chuusai"   %%% "shapeless" % "2.3.3",
+      "org.typelevel" %%% "cats-core" % "1.6.1",
+      "org.scalatest" %%% "scalatest" % "3.0.8" % Test
     ),
     organization := "beyondthelines",
     licenses := ("MIT", url("http://opensource.org/licenses/MIT")) :: Nil,
@@ -25,7 +25,9 @@ val pbdirect = crossProject(JSPlatform, JVMPlatform)
   )
   .jsSettings(
     libraryDependencies ++= Seq(
-      "io.github.cquiroz" %%% "scala-java-time" % "2.0.0-RC2" % "test",
+      "io.github.cquiroz"    %%% "scala-java-time"        % "2.0.0-RC2" % "test",
       "com.thesamet.scalapb" %%% "protobuf-runtime-scala" % "0.8.1"
     )
   )
+
+addCommandAlias("fmt", ";scalafmt;test:scalafmt;scalafmtSbt")
