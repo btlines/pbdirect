@@ -3,7 +3,7 @@ package pbdirect
 import cats.Functor
 import cats.{Contravariant, Invariant}
 import com.google.protobuf.{CodedInputStream, CodedOutputStream}
-import pbdirect.LowPriorityPBWriterImplicits.SizeMap
+import pbdirect.LowPriorityPBWriterImplicits.SizeWithoutTag
 
 sealed trait PBFormat[A] extends PBReader[A] with PBWriter[A]
 
@@ -21,9 +21,9 @@ object PBFormat extends PBFormatImplicits {
   def apply[A](implicit reader: PBReader[A], writer: PBWriter[A]): PBFormat[A] =
     new PBFormat[A] {
       override def read(input: CodedInputStream): A = reader.read(input)
-      override def writeTo(index: Int, value: A, out: CodedOutputStream, sizes: SizeMap): Unit =
+      override def writeTo(index: Int, value: A, out: CodedOutputStream, sizes: SizeWithoutTag): Unit =
         writer.writeTo(index, value, out, sizes)
-      override def writtenBytesSize(index: Int, value: A, sizes: SizeMap): Int =
+      override def writtenBytesSize(index: Int, value: A, sizes: SizeWithoutTag): Int =
         writer.writtenBytesSize(index, value, sizes)
     }
 }

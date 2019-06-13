@@ -147,6 +147,25 @@ class PBWriterSpec extends WordSpecLike with Matchers {
       )
       message.toPB shouldBe Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114, 111, 115, 101, 114, 118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40, -71, 96)
     }
+    "write to Protobuf a message with many references to the same object at different indices" in {
+      case class Message(value: Option[Int])
+      case class LargeMessage(
+        value0:  Message, value1:  Message, value2:  Message, value3:  Message,
+        value4:  Message, value5:  Message, value6:  Message, value7:  Message,
+        value8:  Message, value9:  Message, value10: Message, value11: Message,
+        value12: Message, value13: Message, value14: Message, value15: Message)
+      case class NestedMessage(value: LargeMessage)
+      val message = Message(Some(1))
+      val nestedMessage = NestedMessage(LargeMessage(
+        message, message, message, message, message, message, message, message,
+        message, message, message, message, message, message, message, message))
+      nestedMessage.toPB shouldBe Array[Byte](
+        10, 65, 10, 2, 8, 1, 18, 2, 8, 1, 26, 2, 8, 1, 34, 2, 8, 1, 42, 2, 8,
+        1, 50, 2, 8, 1, 58, 2, 8, 1, 66, 2, 8, 1, 74, 2, 8, 1, 82, 2, 8, 1, 90,
+        2, 8, 1, 98, 2, 8, 1, 106, 2, 8, 1, 114, 2, 8, 1, 122, 2, 8, 1, -126,
+        1, 2, 8, 1
+      )
+    } 
     "derive new instance using contramap" in {
       import java.time.Instant
       import cats.syntax.contravariant._
