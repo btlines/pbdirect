@@ -1,6 +1,13 @@
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
+import sbtcrossproject.CrossPlugin.autoImport.CrossType.Full
+
+licenses in ThisBuild := ("MIT", url("http://opensource.org/licenses/MIT")) :: Nil
+organization in ThisBuild := "beyondthelines"
+bintrayOrganization in ThisBuild := Some("beyondthelines")
+bintrayPackageLabels in ThisBuild := Seq("scala", "protobuf")
 
 val pbdirect = crossProject(JSPlatform, JVMPlatform)
+  .crossType(Full)
   .in(file("."))
   .enablePlugins(GitVersioning)
   .settings(
@@ -12,10 +19,6 @@ val pbdirect = crossProject(JSPlatform, JVMPlatform)
       "org.typelevel" %%% "cats-core" % "2.0.0-M4",
       "org.scalatest" %%% "scalatest" % "3.0.8" % Test
     ),
-    organization := "beyondthelines",
-    licenses := ("MIT", url("http://opensource.org/licenses/MIT")) :: Nil,
-    bintrayOrganization := Some("beyondthelines"),
-    bintrayPackageLabels := Seq("scala", "protobuf"),
     git.useGitDescribe := true
   )
   .jvmSettings(
