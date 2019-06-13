@@ -2,20 +2,21 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 val pbdirect = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
+  .enablePlugins(GitVersioning)
   .settings(
     name := "pbdirect",
-    version := "0.0.10",
     scalaVersion := "2.12.8",
     crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0"),
     libraryDependencies ++= Seq(
-      "com.chuusai"         %%% "shapeless"     % "2.3.3",
-      "org.typelevel"       %%% "cats-core"     % "2.0.0-M4",
-      "org.scalatest"       %%% "scalatest"     % "3.0.8" % Test
+      "com.chuusai"   %%% "shapeless" % "2.3.3",
+      "org.typelevel" %%% "cats-core" % "2.0.0-M4",
+      "org.scalatest" %%% "scalatest" % "3.0.8" % Test
     ),
     organization := "beyondthelines",
     licenses := ("MIT", url("http://opensource.org/licenses/MIT")) :: Nil,
     bintrayOrganization := Some("beyondthelines"),
     bintrayPackageLabels := Seq("scala", "protobuf"),
+    git.useGitDescribe := true
   )
   .jvmSettings(
     libraryDependencies ++= Seq(
@@ -24,7 +25,9 @@ val pbdirect = crossProject(JSPlatform, JVMPlatform)
   )
   .jsSettings(
     libraryDependencies ++= Seq(
-      "io.github.cquiroz" %%% "scala-java-time" % "2.0.0-RC3" % "test",
+      "io.github.cquiroz"    %%% "scala-java-time"        % "2.0.0-RC3" % "test",
       "com.thesamet.scalapb" %%% "protobuf-runtime-scala" % "0.8.2"
     )
   )
+
+addCommandAlias("fmt", ";scalafmt;test:scalafmt;scalafmtSbt")

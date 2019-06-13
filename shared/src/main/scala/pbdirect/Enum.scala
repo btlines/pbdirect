@@ -1,6 +1,6 @@
 package pbdirect
 
-import shapeless.{ :+:, CNil, Coproduct, Generic, Witness }
+import shapeless.{:+:, CNil, Coproduct, Generic, Witness}
 
 object Enum {
   def values[T](implicit v: Values[T], ord: Ordering[T]): Seq[T] = v.apply.sorted
