@@ -10,7 +10,7 @@ package object pbdirect {
     def toPB(implicit writer: PBWriter[A]): Array[Byte] = {
       val out = new ByteArrayOutputStream()
       val pbOut = CodedOutputStream.newInstance(out)
-      val sizes = new util.IdentityHashMap[Any, Int]()
+      val sizes = IdentityMaps.emptyJavaIdentityMap[Any, Int]
       writer.writeTo(NEL.one(1), a, pbOut, sizes)
       pbOut.flush()
       val bytes = out.toByteArray
