@@ -1,4 +1,6 @@
-package pbdirect;
+package pbdirect
+
+import org.scalameter._
 
 object PBWriterBenchmark extends Bench.LocalTime {
 

@@ -4,9 +4,10 @@ import java.io.ByteArrayOutputStream
 
 import cats.data.{NonEmptyList => NEL}
 import cats.{Contravariant, Functor}
-import com.google.protobuf.CodedOutputStream
+import com.google.protobuf.{CodedOutputStream, WireFormat}
 import shapeless.{:+:, ::, Annotations, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Lazy}
 import shapeless.ops.hlist.ToList
+
 import scala.collection.GenMap
 import pbdirect.LowPriorityPBWriterImplicits.SizeWithoutTag
 
@@ -50,46 +51,82 @@ trait LowPriorityPBWriterImplicits {
     annotations: Annotations.Aux[Index, A, I],
     toList: ToList[I, Option[Index]],
     writer: Lazy[PBWriter[R]]
-  ): PBWriter[A] =
-    instance { (index: NEL[Int], value: A, out: CodedOutputStream) =>
-      val buffer = new ByteArrayOutputStream()
-      val pbOut = CodedOutputStream.newInstance(buffer)
+  ): PBWriter[A] = new PBWriter[A] {
+    private lazy val fields: NEL[Int] = {
       val annotationList = toList(annotations())
-      val fields = NEL
-        .fromList((1 to annotationList.size).toList.zip(annotationList).map {
-          case (i, None)           => i
-          case (_, Some(Index(i))) => i
-        })
-        .getOrElse(NEL.one(1))
-
-      writer.value.writeTo(fields, gen.to(value), pbOut)
-      pbOut.flush()
-      out.writeByteArray(index.head, buffer.toByteArray)
+      NEL
+      .fromList((1 to annotationList.size).toList.zip(annotationList).map{
+        case (i, None) => i
+        case (_, Some(Index(i))) => i
+      })
+      .getOrElse(NEL.one(1))
     }
+    
+    override def writeTo(index: NEL[Int], value: A, out: CodedOutputStream, sizes: SizeWithoutTag): Unit = {
+      val valueAsHList = gen.to(value)
+      val size = writer.value.writtenBytesSize(fields, valueAsHList, sizes)
+      out.writeTag(index.head, WireFormat.WIRETYPE_LENGTH_DELIMITED)
+      out.writeUInt32NoTag(size)
+      writer.value.writeTo(fields, valueAsHList, out, sizes)
+    }
+  
+    override def writtenBytesSize(index: NEL[Int], value: A, sizes: SizeWithoutTag): Int = {
+      val sizeWithoutTag = if (sizes.containsKey(value)) {
+        sizes.get(value)
+      } else {
+        val valueAsHList = gen.to(value)
+        val bytesSize = writer.value.writtenBytesSize(fields, valueAsHList, sizes)
+        val size = CodedOutputStream.computeUInt32SizeNoTag(bytesSize) + bytesSize
+        sizes.put(value, size)
+        size
+      }
+      val tagSize = CodedOutputStream.computeTagSize(index.head)
+      tagSize + sizeWithoutTag
+    }
+  }
+    
   implicit val cnilWriter: PBWriter[CNil] = instance(
   { (_: NEL[Int], _: CNil, _: CodedOutputStream, _: SizeWithoutTag) => throw new Exception("Can't write CNil") },
   { (_: NEL[Int], _: CNil, _: SizeWithoutTag) => 0 }
   )
-  implicit def coprodWriter[A, R <: Coproduct](implicit gen: Generic.Aux[A, R], writer: PBWriter[R]): PBWriter[A] =
-    instance { (index: NEL[Int], value: A, out: CodedOutputStream) =>
-      writer.writeTo(index, gen.to(value), out)
-    }
+  implicit def coprodWriter[A, R <: Coproduct](implicit gen: Generic.Aux[A, R], writer: PBWriter[R]): PBWriter[A] = instance(
+  { (index: NEL[Int], value: A, out: CodedOutputStream, sizes: SizeWithoutTag) =>
+    writer.writeTo(index, gen.to(value), out, sizes)
+  },
+  { (index: NEL[Int], value: A, sizes: SizeWithoutTag) =>
+    writer.writtenBytesSize(index, gen.to(value), sizes)
+  }
+  )
 }
 
 trait PBConsWriter extends LowPriorityPBWriterImplicits {
   implicit def consWriter[H, T <: HList](implicit head: PBWriter[H], tail: Lazy[PBWriter[T]]): PBWriter[H :: T] =
-    instance { (index: NEL[Int], value: H :: T, out: CodedOutputStream) =>
-      head.writeTo(index, value.head, out)
-      NEL.fromList(index.tail).foreach(tail.value.writeTo(_, value.tail, out))
+    instance(
+    { (index: NEL[Int], value: H :: T, out: CodedOutputStream, sizes: SizeWithoutTag) =>
+      head.writeTo(index, value.head, out, sizes)
+      NEL.fromList(index.tail).foreach(tail.value.writeTo(_, value.tail, out, sizes))
+    },
+    { (index: NEL[Int], value: H :: T, sizes: SizeWithoutTag) =>
+      head.writtenBytesSize(index, value.head, sizes) +
+      NEL.fromList(index.tail).map(tail.value.writtenBytesSize(_, value.tail, sizes)).getOrElse(0)
     }
+    )
 
   implicit def cconsWriter[H, T <: Coproduct](implicit head: PBWriter[H], tail: PBWriter[T]): PBWriter[H :+: T] =
-    instance { (index: NEL[Int], value: H :+: T, out: CodedOutputStream) =>
+    instance(
+    { (index: NEL[Int], value: H :+: T, out: CodedOutputStream, sizes: SizeWithoutTag) =>
       value match {
-        case Inl(v) => head.writeTo(index, v, out)
-        case Inr(v) => tail.writeTo(index, v, out)
+        case Inl(v) => head.writeTo(index, v, out, sizes)
+        case Inr(v) => tail.writeTo(index, v, out, sizes)
+      }
+    },
+    { (index: NEL[Int], value: H :+: T, sizes: SizeWithoutTag) =>
+      value match {
+        case Inl(v) => head.writtenBytesSize(index, v, sizes)
+        case Inr(v) => tail.writtenBytesSize(index, v, sizes)
       }
     }
+    )
 }
 
 trait PBConsWriter2 extends PBConsWriter {
@@ -98,24 +135,40 @@ trait PBConsWriter2 extends PBConsWriter {
     h2: PBWriter[H2],
     tail: Lazy[PBWriter[T]]
   ): PBWriter[H1 :: H2 :: T] =
-    instance { (index: NEL[Int], value: H1 :: H2 :: T, out: CodedOutputStream) =>
-      h1.writeTo(index, value.head, out)
-      NEL.fromList(index.tail).foreach(h2.writeTo(_, value.tail.head, out))
-      NEL.fromList(index.tail.tail).foreach(tail.value.writeTo(_, value.tail.tail, out))
-    }
+    instance(
+    { (index: NEL[Int], value: H1 :: H2 :: T, out: CodedOutputStream, sizes: SizeWithoutTag) =>
+      h1.writeTo(index, value.head, out, sizes)
+      NEL.fromList(index.tail).foreach(h2.writeTo(_, value.tail.head, out, sizes))
+      NEL.fromList(index.tail.tail).foreach(tail.value.writeTo(_, value.tail.tail, out, sizes))
+    },
+      { (index: NEL[Int], value: H1 :: H2 :: T, sizes: SizeWithoutTag) =>
+        h1.writtenBytesSize(index, value.head, sizes) +
+        NEL.fromList(index.tail).map(h2.writtenBytesSize(_, value.tail.head, sizes)).getOrElse(0) +
+        NEL.fromList(index.tail.tail).map(tail.value.writtenBytesSize(_, value.tail.tail, sizes)).getOrElse(0)
+      }
+    )
 
   implicit def cconsWriter2[H1, H2, T <: Coproduct](
     implicit h1: PBWriter[H1],
     h2: PBWriter[H2],
     tail: PBWriter[T]
   ): PBWriter[H1 :+: H2 :+: T] =
-    instance { (index: NEL[Int], value: H1 :+: H2 :+: T, out: CodedOutputStream) =>
+    instance(
+    { (index: NEL[Int], value: H1 :+: H2 :+: T, out: CodedOutputStream, sizes: SizeWithoutTag) =>
       value match {
-        case Inl(v)      => h1.writeTo(index, v, out)
-        case Inr(Inl(v)) => h2.writeTo(index, v, out)
-        case Inr(Inr(v)) => tail.writeTo(index, v, out)
+        case Inl(v)      => h1.writeTo(index, v, out, sizes)
+        case Inr(Inl(v)) => h2.writeTo(index, v, out, sizes)
+        case Inr(Inr(v)) => tail.writeTo(index, v, out, sizes)
+      }
+    },
+    { (index: NEL[Int], value: H1 :+: H2 :+: T, sizes: SizeWithoutTag) =>
+      value match {
+        case Inl(v)      => h1.writtenBytesSize(index, v, sizes)
+        case Inr(Inl(v)) => h2.writtenBytesSize(index, v, sizes)
+        case Inr(Inr(v)) => tail.writtenBytesSize(index, v, sizes)
       }
     }
+    )
 }
 
 trait PBConsWriter4 extends PBConsWriter2 {
@@ -127,19 +180,34 @@ trait PBConsWriter4 extends PBConsWriter2 {
     h4: PBWriter[H4],
     tail: Lazy[PBWriter[T]]
   ): PBWriter[H1 :: H2 :: H3 :: H4 :: T] =
-    instance {
+    instance(
+    {
       (
         index: NEL[Int],
         value: H1 :: H2 :: H3 :: H4 :: T,
-        out: CodedOutputStream
+        out: CodedOutputStream,
+        sizes: SizeWithoutTag
       ) =>
-        h1.writeTo(index, value.head, out)
-        NEL.fromList(index.tail).foreach(h2.writeTo(_, value.tail.head, out))
-        NEL.fromList(index.tail.tail).foreach(h3.writeTo(_, value.tail.tail.head, out))
-        NEL.fromList(index.tail.tail.tail).foreach(h4.writeTo(_, value.tail.tail.tail.head, out))
-        NEL.fromList(index.tail.tail.tail.tail).foreach(tail.value.writeTo(_, value.tail.tail.tail.tail, out))
-
+        h1.writeTo(index, value.head, out, sizes)
+        NEL.fromList(index.tail).foreach(h2.writeTo(_, value.tail.head, out, sizes))
+        NEL.fromList(index.tail.tail).foreach(h3.writeTo(_, value.tail.tail.head, out, sizes))
+        NEL.fromList(index.tail.tail.tail).foreach(h4.writeTo(_, value.tail.tail.tail.head, out, sizes))
+        NEL.fromList(index.tail.tail.tail.tail).foreach(tail.value.writeTo(_, value.tail.tail.tail.tail, out, sizes))
+  
+    },
+    {
+      (
+      index: NEL[Int],
+      value: H1 :: H2 :: H3 :: H4 :: T,
+      sizes: SizeWithoutTag
+      ) =>
+        h1.writtenBytesSize(index, value.head, sizes) +
+        NEL.fromList(index.tail).map(h2.writtenBytesSize(_, value.tail.head, sizes)).getOrElse(0) +
+        NEL.fromList(index.tail.tail).map(h3.writtenBytesSize(_, value.tail.tail.head, sizes)).getOrElse(0) +
+        NEL.fromList(index.tail.tail.tail).map(h4.writtenBytesSize(_, value.tail.tail.tail.head, sizes)).getOrElse(0) +
+        NEL.fromList(index.tail.tail.tail.tail).map(tail.value.writtenBytesSize(_, value.tail.tail.tail.tail, sizes)).getOrElse(0)
     }
+    )
 
   implicit def cconsWriter4[H1, H2, H3, H4, T <: Coproduct](
     implicit
@@ -149,20 +217,37 @@ trait PBConsWriter4 extends PBConsWriter2 {
     h4: PBWriter[H4],
     tail: PBWriter[T]
   ): PBWriter[H1 :+: H2 :+: H3 :+: H4 :+: T] =
-    instance {
+    instance(
+    {
       (
         index: NEL[Int],
         value: H1 :+: H2 :+: H3 :+: H4 :+: T,
-        out: CodedOutputStream
+        out: CodedOutputStream,
+        sizes: SizeWithoutTag
       ) =>
         value match {
-          case Inl(v)                => h1.writeTo(index, v, out)
-          case Inr(Inl(v))           => h2.writeTo(index, v, out)
-          case Inr(Inr(Inl(v)))      => h3.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inl(v)))) => h4.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inr(v)))) => tail.writeTo(index, v, out)
+          case Inl(v)                => h1.writeTo(index, v, out, sizes)
+          case Inr(Inl(v))           => h2.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inl(v)))      => h3.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inl(v)))) => h4.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inr(v)))) => tail.writeTo(index, v, out, sizes)
+        }
+    },
+    {
+      (
+      index: NEL[Int],
+      value: H1 :+: H2 :+: H3 :+: H4 :+: T,
+      sizes: SizeWithoutTag
+      ) =>
+        value match {
+          case Inl(v)                => h1.writtenBytesSize(index, v, sizes)
+          case Inr(Inl(v))           => h2.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inl(v)))      => h3.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inl(v)))) => h4.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(v)))) => tail.writtenBytesSize(index, v, sizes)
         }
     }
+    )
 }
 
 trait PBConsWriter8 extends PBConsWriter4 {
@@ -178,28 +263,57 @@ trait PBConsWriter8 extends PBConsWriter4 {
     h8: PBWriter[H8],
     tail: Lazy[PBWriter[T]]
   ): PBWriter[H1 :: H2 :: H3 :: H4 :: H5 :: H6 :: H7 :: H8 :: T] =
-    instance {
+    instance(
+    {
       (
         index: NEL[Int],
         value: H1 :: H2 :: H3 :: H4 :: H5 :: H6 :: H7 :: H8 :: T,
-        out: CodedOutputStream
+        out: CodedOutputStream,
+        sizes: SizeWithoutTag
       ) =>
-        h1.writeTo(index, value.head, out)
-        NEL.fromList(index.tail).foreach(h2.writeTo(_, value.tail.head, out))
-        NEL.fromList(index.tail.tail).foreach(h3.writeTo(_, value.tail.tail.head, out))
-        NEL.fromList(index.tail.tail.tail).foreach(h4.writeTo(_, value.tail.tail.tail.head, out))
-        NEL.fromList(index.tail.tail.tail.tail).foreach(h5.writeTo(_, value.tail.tail.tail.tail.head, out))
-        NEL.fromList(index.tail.tail.tail.tail.tail).foreach(h6.writeTo(_, value.tail.tail.tail.tail.tail.head, out))
+        h1.writeTo(index, value.head, out, sizes)
+        NEL.fromList(index.tail).foreach(h2.writeTo(_, value.tail.head, out, sizes))
+        NEL.fromList(index.tail.tail).foreach(h3.writeTo(_, value.tail.tail.head, out, sizes))
+        NEL.fromList(index.tail.tail.tail).foreach(h4.writeTo(_, value.tail.tail.tail.head, out, sizes))
+        NEL.fromList(index.tail.tail.tail.tail).foreach(h5.writeTo(_, value.tail.tail.tail.tail.head, out, sizes))
+        NEL.fromList(index.tail.tail.tail.tail.tail).foreach(h6.writeTo(_, value.tail.tail.tail.tail.tail.head, out, sizes))
         NEL
-          .fromList(index.tail.tail.tail.tail.tail.tail)
-          .foreach(h7.writeTo(_, value.tail.tail.tail.tail.tail.tail.head, out))
+        .fromList(index.tail.tail.tail.tail.tail.tail)
+        .foreach(h7.writeTo(_, value.tail.tail.tail.tail.tail.tail.head, out, sizes))
         NEL
-          .fromList(index.tail.tail.tail.tail.tail.tail.tail)
-          .foreach(h8.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.head, out))
+        .fromList(index.tail.tail.tail.tail.tail.tail.tail)
+        .foreach(h8.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.head, out, sizes))
         NEL
-          .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail)
-          .foreach(tail.value.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail, out))
+        .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail)
+        .foreach(tail.value.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail, out, sizes))
+    },
+    {
+      (
+      index: NEL[Int],
+      value: H1 :: H2 :: H3 :: H4 :: H5 :: H6 :: H7 :: H8 :: T,
+      sizes: SizeWithoutTag
+      ) =>
+        h1.writtenBytesSize(index, value.head, sizes) +
+        NEL.fromList(index.tail).map(h2.writtenBytesSize(_, value.tail.head, sizes)).getOrElse(0) +
+        NEL.fromList(index.tail.tail).map(h3.writtenBytesSize(_, value.tail.tail.head, sizes)).getOrElse(0) +
+        NEL.fromList(index.tail.tail.tail).map(h4.writtenBytesSize(_, value.tail.tail.tail.head, sizes)).getOrElse(0) +
+        NEL.fromList(index.tail.tail.tail.tail).map(h5.writtenBytesSize(_, value.tail.tail.tail.tail.head, sizes)).getOrElse(0) +
+        NEL.fromList(index.tail.tail.tail.tail.tail).map(h6.writtenBytesSize(_, value.tail.tail.tail.tail.tail.head, sizes)).getOrElse(0) +
+        NEL
+        .fromList(index.tail.tail.tail.tail.tail.tail)
+        .map(h7.writtenBytesSize(_, value.tail.tail.tail.tail.tail.tail.head, sizes))
+        .getOrElse(0) +
+        NEL
+        .fromList(index.tail.tail.tail.tail.tail.tail.tail)
+        .map(h8.writtenBytesSize(_, value.tail.tail.tail.tail.tail.tail.tail.head, sizes))
+        .getOrElse(0) +
+        NEL
+        .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail)
+        .map(tail.value.writtenBytesSize(_, value.tail.tail.tail.tail.tail.tail.tail.tail, sizes))
+        .getOrElse(0)
+  
     }
+    )
 
   implicit def cconsWriter8[H1, H2, H3, H4, H5, H6, H7, H8, T <: Coproduct](
     implicit
@@ -213,24 +327,45 @@ trait PBConsWriter8 extends PBConsWriter4 {
     h8: PBWriter[H8],
     tail: PBWriter[T]
   ): PBWriter[H1 :+: H2 :+: H3 :+: H4 :+: H5 :+: H6 :+: H7 :+: H8 :+: T] =
-    instance {
+    instance(
+    {
       (
-        index: NEL[Int],
-        value: H1 :+: H2 :+: H3 :+: H4 :+: H5 :+: H6 :+: H7 :+: H8 :+: T,
-        out: CodedOutputStream
+      index: NEL[Int],
+      value: H1 :+: H2 :+: H3 :+: H4 :+: H5 :+: H6 :+: H7 :+: H8 :+: T,
+      out: CodedOutputStream,
+      sizes: SizeWithoutTag
       ) =>
         value match {
-          case Inl(v)                                    => h1.writeTo(index, v, out)
-          case Inr(Inl(v))                               => h2.writeTo(index, v, out)
-          case Inr(Inr(Inl(v)))                          => h3.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inl(v))))                     => h4.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inr(Inl(v)))))                => h5.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inr(Inr(Inl(v))))))           => h6.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))      => h7.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))) => h8.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(v)))))))) => tail.writeTo(index, v, out)
+          case Inl(v)                                    => h1.writeTo(index, v, out, sizes)
+          case Inr(Inl(v))                               => h2.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inl(v)))                          => h3.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inl(v))))                     => h4.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inr(Inl(v)))))                => h5.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inl(v))))))           => h6.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))      => h7.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))) => h8.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(v)))))))) => tail.writeTo(index, v, out, sizes)
+        }
+    },
+    {
+      (
+      index: NEL[Int],
+      value: H1 :+: H2 :+: H3 :+: H4 :+: H5 :+: H6 :+: H7 :+: H8 :+: T,
+      sizes: SizeWithoutTag
+      ) =>
+        value match {
+          case Inl(v)                                    => h1.writtenBytesSize(index, v, sizes)
+          case Inr(Inl(v))                               => h2.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inl(v)))                          => h3.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inl(v))))                     => h4.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inl(v)))))                => h5.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inl(v))))))           => h6.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))      => h7.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))) => h8.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(v)))))))) => tail.writtenBytesSize(index, v, sizes)
         }
     }
+    )
 }
 
 trait PBConsWriter16 extends PBConsWriter8 {
@@ -256,59 +391,126 @@ trait PBConsWriter16 extends PBConsWriter8 {
   ): PBWriter[
     H1 :: H2 :: H3 :: H4 :: H5 :: H6 :: H7 :: H8 :: H9 :: H10 :: H11 :: H12 :: H13 :: H14 :: H15 :: H16 :: T
   ] =
-    instance {
+    instance(
+    {
       (
         index: NEL[Int],
         value: H1 :: H2 :: H3 :: H4 :: H5 :: H6 :: H7 :: H8 :: H9 :: H10 :: H11 :: H12 :: H13 :: H14 :: H15 :: H16 :: T,
-        out: CodedOutputStream
+        out: CodedOutputStream,
+        sizes: SizeWithoutTag
       ) =>
-        h1.writeTo(index, value.head, out)
-        NEL.fromList(index.tail).foreach(h2.writeTo(_, value.tail.head, out))
-        NEL.fromList(index.tail.tail).foreach(h3.writeTo(_, value.tail.tail.head, out))
-        NEL.fromList(index.tail.tail.tail).foreach(h4.writeTo(_, value.tail.tail.tail.head, out))
-        NEL.fromList(index.tail.tail.tail.tail).foreach(h5.writeTo(_, value.tail.tail.tail.tail.head, out))
-        NEL.fromList(index.tail.tail.tail.tail.tail).foreach(h6.writeTo(_, value.tail.tail.tail.tail.tail.head, out))
+        h1.writeTo(index, value.head, out, sizes)
+        NEL.fromList(index.tail).foreach(h2.writeTo(_, value.tail.head, out, sizes))
+        NEL.fromList(index.tail.tail).foreach(h3.writeTo(_, value.tail.tail.head, out, sizes))
+        NEL.fromList(index.tail.tail.tail).foreach(h4.writeTo(_, value.tail.tail.tail.head, out, sizes))
+        NEL.fromList(index.tail.tail.tail.tail).foreach(h5.writeTo(_, value.tail.tail.tail.tail.head, out, sizes))
+        NEL.fromList(index.tail.tail.tail.tail.tail).foreach(h6.writeTo(_, value.tail.tail.tail.tail.tail.head, out, sizes))
         NEL
           .fromList(index.tail.tail.tail.tail.tail.tail)
-          .foreach(h7.writeTo(_, value.tail.tail.tail.tail.tail.tail.head, out))
+          .foreach(h7.writeTo(_, value.tail.tail.tail.tail.tail.tail.head, out, sizes))
         NEL
           .fromList(index.tail.tail.tail.tail.tail.tail.tail)
-          .foreach(h8.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.head, out))
+          .foreach(h8.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.head, out, sizes))
         NEL
           .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail)
-          .foreach(h9.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.head, out))
+          .foreach(h9.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.head, out, sizes))
         NEL
           .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail.tail)
-          .foreach(h10.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, out))
+          .foreach(h10.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, out, sizes))
         NEL
           .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail)
-          .foreach(h11.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, out))
+          .foreach(h11.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, out, sizes))
         NEL
           .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail)
-          .foreach(h12.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, out))
+          .foreach(h12.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, out, sizes))
         NEL
           .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail)
-          .foreach(h13.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, out))
+          .foreach(h13.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, out, sizes))
         NEL
           .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail)
-          .foreach(h14.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, out))
+          .foreach(h14.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, out, sizes))
         NEL
           .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail)
           .foreach(
-            h15.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, out)
+            h15.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, out, sizes)
           )
         NEL
           .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail)
           .foreach(
-            h16.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, out)
+            h16.writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, out, sizes)
           )
         NEL
           .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail)
           .foreach(
             tail.value
-              .writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail, out)
+              .writeTo(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail, out, sizes)
           )
+    },
+    {
+      (
+      index: NEL[Int],
+      value: H1 :: H2 :: H3 :: H4 :: H5 :: H6 :: H7 :: H8 :: H9 :: H10 :: H11 :: H12 :: H13 :: H14 :: H15 :: H16 :: T,
+      sizes: SizeWithoutTag
+      ) =>
+        h1.writtenBytesSize(index, value.head, sizes) +
+        NEL.fromList(index.tail).map(h2.writtenBytesSize(_, value.tail.head, sizes)).getOrElse(0) +
+        NEL.fromList(index.tail.tail).map(h3.writtenBytesSize(_, value.tail.tail.head, sizes)).getOrElse(0) +
+        NEL.fromList(index.tail.tail.tail).map(h4.writtenBytesSize(_, value.tail.tail.tail.head, sizes)).getOrElse(0) +
+        NEL.fromList(index.tail.tail.tail.tail).map(h5.writtenBytesSize(_, value.tail.tail.tail.tail.head, sizes)).getOrElse(0) +
+        NEL.fromList(index.tail.tail.tail.tail.tail).map(h6.writtenBytesSize(_, value.tail.tail.tail.tail.tail.head, sizes)).getOrElse(0) +
+        NEL
+        .fromList(index.tail.tail.tail.tail.tail.tail)
+        .map(h7.writtenBytesSize(_, value.tail.tail.tail.tail.tail.tail.head, sizes))
+        .getOrElse(0) +
+        NEL
+        .fromList(index.tail.tail.tail.tail.tail.tail.tail)
+        .map(h8.writtenBytesSize(_, value.tail.tail.tail.tail.tail.tail.tail.head, sizes))
+        .getOrElse(0) +
+        NEL
+        .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail)
+        .map(h9.writtenBytesSize(_, value.tail.tail.tail.tail.tail.tail.tail.tail.head, sizes))
+        .getOrElse(0) +
+        NEL
+        .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail.tail)
+        .map(h10.writtenBytesSize(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, sizes))
+        .getOrElse(0) +
+        NEL
+        .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail)
+        .map(h11.writtenBytesSize(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, sizes))
+        .getOrElse(0) +
+        NEL
+        .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail)
+        .map(h12.writtenBytesSize(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, sizes))
+        .getOrElse(0) +
+        NEL
+        .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail)
+        .map(h13.writtenBytesSize(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, sizes))
+        .getOrElse(0) +
+        NEL
+        .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail)
+        .map(h14.writtenBytesSize(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, sizes))
+        .getOrElse(0) +
+        NEL
+        .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail)
+        .map(
+          h15.writtenBytesSize(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, sizes)
+        )
+        .getOrElse(0) +
+        NEL
+        .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail)
+        .map(
+          h16.writtenBytesSize(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.head, sizes)
+        )
+        .getOrElse(0) +
+        NEL
+        .fromList(index.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail)
+        .map(
+          tail.value
+          .writtenBytesSize(_, value.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail.tail, sizes)
+        )
+        .getOrElse(0)
     }
+    )
 
   implicit def cconsWriter16[H1, H2, H3, H4, H5, H6, H7, H8, H9, H10, H11, H12, H13, H14, H15, H16, T <: Coproduct](
     implicit
@@ -332,35 +534,67 @@ trait PBConsWriter16 extends PBConsWriter8 {
   ): PBWriter[
     H1 :+: H2 :+: H3 :+: H4 :+: H5 :+: H6 :+: H7 :+: H8 :+: H9 :+: H10 :+: H11 :+: H12 :+: H13 :+: H14 :+: H15 :+: H16 :+: T
   ] =
-    instance {
+    instance(
+    {
       (
         index: NEL[Int],
         value: H1 :+: H2 :+: H3 :+: H4 :+: H5 :+: H6 :+: H7 :+: H8 :+: H9 :+: H10 :+: H11 :+: H12 :+: H13 :+: H14 :+: H15 :+: H16 :+: T,
-        out: CodedOutputStream
+        out: CodedOutputStream,
+        sizes: SizeWithoutTag
       ) =>
         value match {
-          case Inl(v)                                                                  => h1.writeTo(index, v, out)
-          case Inr(Inl(v))                                                             => h2.writeTo(index, v, out)
-          case Inr(Inr(Inl(v)))                                                        => h3.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inl(v))))                                                   => h4.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inr(Inl(v)))))                                              => h5.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inr(Inr(Inl(v))))))                                         => h6.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))                                    => h7.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v))))))))                               => h8.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))))                          => h9.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v))))))))))                     => h10.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))))))                => h11.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v))))))))))))           => h12.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))))))))      => h13.writeTo(index, v, out)
-          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))))))))) => h14.writeTo(index, v, out)
+          case Inl(v)                                                                  => h1.writeTo(index, v, out, sizes)
+          case Inr(Inl(v))                                                             => h2.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inl(v)))                                                        => h3.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inl(v))))                                                   => h4.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inr(Inl(v)))))                                              => h5.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inl(v))))))                                         => h6.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))                                    => h7.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v))))))))                               => h8.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))))                          => h9.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v))))))))))                     => h10.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))))))                => h11.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v))))))))))))           => h12.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))))))))      => h13.writeTo(index, v, out, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))))))))) => h14.writeTo(index, v, out, sizes)
           case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v))))))))))))))) =>
-            h15.writeTo(index, v, out)
+            h15.writeTo(index, v, out, sizes)
           case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))))))))))) =>
-            h16.writeTo(index, v, out)
+            h16.writeTo(index, v, out, sizes)
           case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr((v))))))))))))))))) =>
-            tail.writeTo(index, v, out)
+            tail.writeTo(index, v, out, sizes)
+        }
+    },
+    {
+      (
+      index: NEL[Int],
+      value: H1 :+: H2 :+: H3 :+: H4 :+: H5 :+: H6 :+: H7 :+: H8 :+: H9 :+: H10 :+: H11 :+: H12 :+: H13 :+: H14 :+: H15 :+: H16 :+: T,
+      sizes: SizeWithoutTag
+      ) =>
+        value match {
+          case Inl(v)                                                                  => h1.writtenBytesSize(index, v, sizes)
+          case Inr(Inl(v))                                                             => h2.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inl(v)))                                                        => h3.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inl(v))))                                                   => h4.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inl(v)))))                                              => h5.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inl(v))))))                                         => h6.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))                                    => h7.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v))))))))                               => h8.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))))                          => h9.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v))))))))))                     => h10.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))))))                => h11.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v))))))))))))           => h12.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))))))))      => h13.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))))))))) => h14.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v))))))))))))))) =>
+            h15.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inl(v)))))))))))))))) =>
+            h16.writtenBytesSize(index, v, sizes)
+          case Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr(Inr((v))))))))))))))))) =>
+            tail.writtenBytesSize(index, v, sizes)
         }
     }
+    )
 }
 
 trait PBWriterImplicits extends PBConsWriter16 {
@@ -513,20 +747,6 @@ object PBWriter extends PBWriterImplicits {
 //      tail.value.writtenBytesSize(index + 1, value.tail, sizes)
 //    }
 //    )
-//  implicit def prodWriter[A, R <: HList](implicit gen: Generic.Aux[A, R], writer: Lazy[PBWriter[R]]): PBWriter[A] =
-//    instance(
-//    { (index: Int, value: A, out: CodedOutputStream, sizes: SizeWithoutTag) =>
-//      val valueAsHList = gen.to(value)
-//      val size = writer.value.writtenBytesSize(1, valueAsHList, sizes)
-//      out.writeTag(index, WireFormat.WIRETYPE_LENGTH_DELIMITED)
-//      out.writeUInt32NoTag(size)
-//      writer.value.writeTo(1, valueAsHList, out, sizes)
-//    },
-//    LowPriorityPBWriterImplicits.memoizeSizeWithoutTag { (index: Int, value: A, sizes: SizeWithoutTag) =>
-//      val bytesSize = writer.value.writtenBytesSize(1, gen.to(value), sizes)
-//      CodedOutputStream.computeUInt32SizeNoTag(bytesSize) + bytesSize
-//    }
-//    )
 //
 //  implicit def cconsWriter[H, T <: Coproduct](implicit head: PBWriter[H], tail: PBWriter[T]): PBWriter[H :+: T] =
 //    instance(
@@ -541,15 +761,6 @@ object PBWriter extends PBWriterImplicits {
 //        case Inl(h) => head.writtenBytesSize(index, h, sizes)
 //        case Inr(t) => tail.writtenBytesSize(index, t, sizes)
 //      }
-//    }
-//    )
-//  implicit def coprodWriter[A, R <: Coproduct](implicit gen: Generic.Aux[A, R], writer: PBWriter[R]): PBWriter[A] =
-//    instance(
-//    { (index: Int, value: A, out: CodedOutputStream, sizes: SizeWithoutTag) =>
-//      writer.writeTo(index, gen.to(value), out, sizes)
-//    },
-//    { (index: Int, value: A, sizes: SizeWithoutTag) =>
-//      writer.writtenBytesSize(index, gen.to(value), sizes)
 //    }
 //    )
 //}

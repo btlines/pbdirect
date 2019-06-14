@@ -17,7 +17,8 @@ val pbdirect = crossProject(JSPlatform, JVMPlatform)
     libraryDependencies ++= Seq(
       "com.chuusai"       %%% "shapeless"  % "2.3.3",
       "org.typelevel"     %%% "cats-core"  % "2.0.0-M4",
-      "org.scalatest"     %%% "scalatest"  % "3.0.8" % Test
+      "org.scalatest"     %%% "scalatest"  % "3.0.8" % Test,
+      "com.storm-enroute" %%  "scalameter" % "0.17"  % Test
     ),
     resolvers += "Sonatype OSS Snapshots" at
     "https://oss.sonatype.org/content/repositories/releases",
@@ -25,8 +26,7 @@ val pbdirect = crossProject(JSPlatform, JVMPlatform)
   )
   .jvmSettings(
     libraryDependencies ++= Seq(
-      "com.google.protobuf" %  "protobuf-java" % "3.8.0",
-      "com.storm-enroute"   %% "scalameter"    % "0.17" % Test
+      "com.google.protobuf" %  "protobuf-java" % "3.8.0"
     )
   )
   .jsSettings(
