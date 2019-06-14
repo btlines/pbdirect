@@ -12,7 +12,7 @@ val pbdirect = crossProject(JSPlatform, JVMPlatform)
   .enablePlugins(GitVersioning)
   .settings(
     name := "pbdirect",
-    scalaVersion := "2.12.8",
+    scalaVersion := "2.11.12",
     crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0"),
     libraryDependencies ++= Seq(
       "com.chuusai"       %%% "shapeless"  % "2.3.3",
@@ -25,8 +25,7 @@ val pbdirect = crossProject(JSPlatform, JVMPlatform)
   )
   .jvmSettings(
     libraryDependencies ++= Seq(
-      "com.google.protobuf" %   "protobuf-java" % "3.8.0",
-      "com.storm-enroute"   %%  "scalameter"    % "0.17"  % Test
+      "com.google.protobuf" % "protobuf-java"   % "3.8.0"
     )
   )
   .jsSettings(
