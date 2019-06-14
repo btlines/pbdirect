@@ -1,10 +1,5 @@
 package pbdirect
 
-import org.scalameter.Gen
-import org.scalameter.api.Bench
-import cats.instances.option._
-import cats.instances.list._
-
 object PBReaderBenchmark extends Bench.LocalTime {
   case class Message[V](v: V)
   

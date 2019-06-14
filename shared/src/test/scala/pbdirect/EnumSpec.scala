@@ -1,30 +1,30 @@
 package pbdirect
 
-import org.scalatest.{ Matchers, WordSpecLike }
+import org.scalatest.{Matchers, WordSpecLike}
 
 class EnumSpec extends WordSpecLike with Matchers {
 
-  sealed trait WeekDay  extends Pos
-  case object Monday    extends WeekDay with Pos._1
-  case object Tuesday   extends WeekDay with Pos._2
+  sealed trait WeekDay extends Pos
+  case object Monday extends WeekDay with Pos._1
+  case object Tuesday extends WeekDay with Pos._2
   case object Wednesday extends WeekDay with Pos._3
-  case object Thursday  extends WeekDay with Pos._4
-  case object Friday    extends WeekDay with Pos._5
-  case object Saturday  extends WeekDay with Pos._6
-  case object Sunday    extends WeekDay with Pos._7
+  case object Thursday extends WeekDay with Pos._4
+  case object Friday extends WeekDay with Pos._5
+  case object Saturday extends WeekDay with Pos._6
+  case object Sunday extends WeekDay with Pos._7
 
   "Enum" should {
     "list values in declared order" in {
       Enum.values[WeekDay] shouldBe Monday :: Tuesday :: Wednesday :: Thursday :: Friday :: Saturday :: Sunday :: Nil
     }
     "get correct position for a value" in {
-      Enum.toInt[WeekDay](Monday)    shouldBe 0
-      Enum.toInt[WeekDay](Tuesday)   shouldBe 1
+      Enum.toInt[WeekDay](Monday) shouldBe 0
+      Enum.toInt[WeekDay](Tuesday) shouldBe 1
       Enum.toInt[WeekDay](Wednesday) shouldBe 2
-      Enum.toInt[WeekDay](Thursday)  shouldBe 3
-      Enum.toInt[WeekDay](Friday)    shouldBe 4
-      Enum.toInt[WeekDay](Saturday)  shouldBe 5
-      Enum.toInt[WeekDay](Sunday)    shouldBe 6
+      Enum.toInt[WeekDay](Thursday) shouldBe 3
+      Enum.toInt[WeekDay](Friday) shouldBe 4
+      Enum.toInt[WeekDay](Saturday) shouldBe 5
+      Enum.toInt[WeekDay](Sunday) shouldBe 6
     }
     "get correct value for a position" in {
       Enum.fromInt[WeekDay](0) shouldBe Monday

@@ -1,27 +1,39 @@
-name := "pbdirect"
+import sbtcrossproject.CrossPlugin.autoImport.crossProject
+import sbtcrossproject.CrossPlugin.autoImport.CrossType.Full
 
-version := "0.0.10"
+licenses in ThisBuild := ("MIT", url("http://opensource.org/licenses/MIT")) :: Nil
+organization in ThisBuild := "beyondthelines"
+bintrayOrganization in ThisBuild := Some("beyondthelines")
+bintrayPackageLabels in ThisBuild := Seq("scala", "protobuf")
 
-scalaVersion := "2.12.8"
+val pbdirect = crossProject(JSPlatform, JVMPlatform)
+  .crossType(Full)
+  .in(file("."))
+  .enablePlugins(GitVersioning)
+  .settings(
+    name := "pbdirect",
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0"),
+    libraryDependencies ++= Seq(
+      "com.chuusai"       %%% "shapeless"  % "2.3.3",
+      "org.typelevel"     %%% "cats-core"  % "2.0.0-M4",
+      "org.scalatest"     %%% "scalatest"  % "3.0.8" % Test
+    ),
+    resolvers += "Sonatype OSS Snapshots" at
+    "https://oss.sonatype.org/content/repositories/releases",
+    git.useGitDescribe := true
+  )
+  .jvmSettings(
+    libraryDependencies ++= Seq(
+      "com.google.protobuf" %   "protobuf-java" % "3.8.0",
+      "com.storm-enroute"   %%  "scalameter"    % "0.17"  % Test
+    )
+  )
+  .jsSettings(
+    libraryDependencies ++= Seq(
+      "io.github.cquiroz"    %%% "scala-java-time"        % "2.0.0-RC3" % "test",
+      "com.thesamet.scalapb" %%% "protobuf-runtime-scala" % "0.8.2"
+    )
+  )
 
-crossScalaVersions := Seq("2.11.12", "2.12.8")
-
-libraryDependencies ++= Seq(
-  "com.chuusai"         %% "shapeless"     % "2.3.3",
-  "org.typelevel"       %% "cats-core"     % "1.6.0",
-  "com.google.protobuf" %  "protobuf-java" % "3.8.0",
-  "org.scalatest"       %% "scalatest"     % "3.0.7" % Test,
-  "com.storm-enroute"   %% "scalameter"    % "0.17"  % Test
-)
-
-resolvers += "Sonatype OSS Snapshots" at
-  "https://oss.sonatype.org/content/repositories/releases"
-
-organization := "beyondthelines"
-
-licenses := ("MIT", url("http://opensource.org/licenses/MIT")) :: Nil
-
-bintrayOrganization := Some("beyondthelines")
-
-bintrayPackageLabels := Seq("scala", "protobuf")
-
+addCommandAlias("fmt", ";scalafmt;test:scalafmt;scalafmtSbt")
