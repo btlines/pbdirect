@@ -2,7 +2,7 @@ package pbdirect
 
 import cats.instances.option._
 import cats.instances.list._
-import org.scalatest.{ Matchers, WordSpecLike }
+import org.scalatest.{Matchers, WordSpecLike}
 
 class PBWriterSpec extends WordSpecLike with Matchers {
   "PBWriter" should {
@@ -77,7 +77,7 @@ class PBWriterSpec extends WordSpecLike with Matchers {
     "write a required field to Protobuf" in {
       case class RequiredMessage(value: Int)
       val message = RequiredMessage(5)
-      message.toPB shouldBe Array[Byte](8 , 5)
+      message.toPB shouldBe Array[Byte](8, 5)
     }
     "write an empty message to Protobuf" in {
       case class EmptyMessage()
@@ -139,13 +139,23 @@ class PBWriterSpec extends WordSpecLike with Matchers {
       val stringMessage = NestedMessage(StringMessage(Some("Hello")))
       stringMessage.toPB shouldBe Array[Byte](10, 7, 10, 5, 72, 101, 108, 108, 111)
     }
+    "write a sealed trait with same repr to Protobuf" in {
+      sealed trait Message
+      case class M1(@Index(1) value: Int) extends Message
+      case class M2(@Index(2) value: Int) extends Message
+      val m1 = M1(1)
+      val m2 = M2(2)
+      m1.toPB shouldBe Array[Byte](8, 1)
+      m2.toPB shouldBe Array[Byte](16, 2)
+    }
     "write a message with repeated nested message in Protobuf" in {
       case class Metric(metric: String, microservice: String, node: String, value: Float, count: Int)
       case class Metrics(metrics: List[Metric])
       val message = Metrics(
         Metric("metric", "microservices", "node", 12F, 12345) :: Nil
       )
-      message.toPB shouldBe Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114, 111, 115, 101, 114, 118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40, -71, 96)
+      message.toPB shouldBe Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114, 111, 115,
+        101, 114, 118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40, -71, 96)
     }
     "write to Protobuf a message with many references to the same object at different indices" in {
       case class Message(value: Option[Int])

@@ -1,6 +1,6 @@
 package pbdirect
 
-import org.scalatest.{ Matchers, WordSpecLike }
+import org.scalatest.{Matchers, WordSpecLike}
 
 class PBReaderSpec extends WordSpecLike with Matchers {
   "PBReader" should {
@@ -71,7 +71,7 @@ class PBReaderSpec extends WordSpecLike with Matchers {
     }
     "read a required field from Protobuf" in {
       case class RequiredMessage(value: Int)
-      val bytes = Array[Byte](8 , 5)
+      val bytes = Array[Byte](8, 5)
       bytes.pbTo[RequiredMessage] shouldBe RequiredMessage(5)
     }
     "read an empty message from Protobuf" in {
@@ -134,14 +134,65 @@ class PBReaderSpec extends WordSpecLike with Matchers {
       val stringBytes = Array[Byte](10, 7, 10, 5, 72, 101, 108, 108, 111)
       stringBytes.pbTo[NestedMessage] shouldBe NestedMessage(StringMessage(Some("Hello")))
     }
+    "read a sealed trait with same repr from Protobuf" in {
+      sealed trait Message
+      case class M1(@Index(1) value: Int) extends Message
+      case class M2(@Index(2) value: Int) extends Message
+      val m1Bytes = Array[Byte](8, 1)
+      val m2Bytes = Array[Byte](16, 2)
+      m1Bytes.pbTo[Message] shouldBe M1(1)
+      m2Bytes.pbTo[Message] shouldBe M2(2)
+    }
     "read a message with repeated nested message from Protobuf" in {
       case class Metric(name: String, service: String, node: String, value: Float, count: Int)
       case class Metrics(metrics: List[Metric])
       val message = Metrics(
         Metric("metric", "microservices", "node", 12F, 12345) :: Nil
       )
-      val bytes = Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114, 111, 115, 101, 114, 118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40, -71, 96)
+      val bytes = Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114, 111, 115, 101, 114,
+        118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40, -71, 96)
       bytes.pbTo[Metrics] shouldBe message
+    }
+    "read a message with many fields from Protobuf" in {
+      case class Message(
+        _1: Int,
+        _2: Int,
+        _3: Int,
+        _4: Int,
+        _5: Int,
+        _6: Int,
+        _7: Int,
+        _8: Int,
+        _9: Int,
+        _10: Int,
+        _11: Int,
+        _12: Int,
+        _13: Int,
+        _14: Int,
+        _15: Int,
+        _16: Int,
+        _17: Int,
+        _18: Int,
+        _19: Int,
+        _20: Int,
+        _21: Int,
+        _22: Int,
+        _23: Int,
+        _24: Int,
+        _25: Int,
+        _26: Int,
+        _27: Int,
+        _28: Int,
+        _29: Int,
+        _30: Int,
+        _31: Int
+      )
+      val bytes = Array[Byte](8, 1, 16, 2, 24, 3, 32, 4, 40, 5, 48, 6, 56, 7, 64, 8, 72, 9, 80, 10, 88, 11, 96, 12, 104,
+        13, 112, 14, 120, 15, -128, 1, 16, -120, 1, 17, -112, 1, 18, -104, 1, 19, -96, 1, 20, -88, 1, 21, -80, 1, 22,
+        -72, 1, 23, -64, 1, 24, -56, 1, 25, -48, 1, 26, -40, 1, 27, -32, 1, 28, -24, 1, 29, -16, 1, 30, -8, 1, 31)
+      val message = Message(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+        26, 27, 28, 29, 30, 31)
+      bytes.pbTo[Message] shouldBe message
     }
     "derive new instance using map" in {
       import java.time.Instant
