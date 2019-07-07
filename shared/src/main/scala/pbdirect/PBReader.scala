@@ -32,12 +32,12 @@ trait PBReader[A] {
   */
 trait PBParser[A] {
   def readFieldWithoutTag(index: NEL[Int], input: CodedInputStream, size: Option[Int]): Unit
-  def build(): A
-  def readSingleFieldAndBuild(input: CodedInputStream, size: Option[Int]): A = {
+  private[pbdirect] def build(): A
+  private[pbdirect] def readSingleFieldAndBuild(input: CodedInputStream, size: Option[Int]): A = {
     readFieldWithoutTag(NEL.one(1), input, size)
     build()
   }
-  def componentParsers: List[PBParser[_]] = List(this)
+  private[pbdirect] def componentParsers: List[PBParser[_]] = List(this)
 }
 
 trait LowerPriorityPBReaderImplicits {
@@ -133,10 +133,10 @@ object PBReader extends PBReaderImplicits {
 trait LowPriorityPBParserImplicits {
   def exactlyOnceParser[A](readF: (CodedInputStream, Option[Int]) => A): PBParser[A] = new PBParser[A] {
     private var value: Option[A] = None
-    override def readFieldWithoutTag(index: NEL[Int], input: CodedInputStream, size: Option[Int]): Unit = {
+    private[pbdirect] override def readFieldWithoutTag(index: NEL[Int], input: CodedInputStream, size: Option[Int]): Unit = {
       value = Some(readF(input, size))
     }
-    override def build(): A = {
+    private[pbdirect] override def build(): A = {
       val v = value.get
       value = None
       v
@@ -145,11 +145,11 @@ trait LowPriorityPBParserImplicits {
   
   def possiblyRepeatedParser[A, B](sizeHint: Int)(readFieldWithoutTagF: (CodedInputStream, Option[Int]) => A)(builder: mutable.IndexedSeq[A] => B): PBParser[B] = new PBParser[B] {
     private var values: mutable.ArrayBuffer[A] = null
-    override def readFieldWithoutTag(index: NEL[Int], input: CodedInputStream, size: Option[Int]): Unit = {
+    private[pbdirect] override def readFieldWithoutTag(index: NEL[Int], input: CodedInputStream, size: Option[Int]): Unit = {
       if (values == null) values = new ArrayBuffer[A](sizeHint)
       values += readFieldWithoutTagF(input, size)
     }
-    override def build(): B = {
+    private[pbdirect] override def build(): B = {
       if (values == null) values = new ArrayBuffer[A](initialSize=0)
       val v = builder(values)
       values = null
@@ -160,15 +160,15 @@ trait LowPriorityPBParserImplicits {
     possiblyRepeatedParser(sizeHint)(reader.read)(builder)
   
   implicit val hnilParser: PBParser[HNil] = new PBParser[HNil] {
-    override def readFieldWithoutTag(index: NEL[Int], input: CodedInputStream, size: Option[Int]): Unit = ()
-    override def build(): HNil = HNil
-    override def componentParsers: List[PBParser[_]] = Nil
+    private[pbdirect] override def readFieldWithoutTag(index: NEL[Int], input: CodedInputStream, size: Option[Int]): Unit = ()
+    private[pbdirect] override def build(): HNil = HNil
+    private[pbdirect] override def componentParsers: List[PBParser[_]] = Nil
   }
   implicit val cnilParser: PBParser[CNil] = new PBParser[CNil] {
-    override def readFieldWithoutTag(index: NEL[Int], input: CodedInputStream, size: Option[Int]): Unit =
+    private[pbdirect] override def readFieldWithoutTag(index: NEL[Int], input: CodedInputStream, size: Option[Int]): Unit =
       throw new UnsupportedOperationException("Can't read HNil")
-    override def build(): CNil = throw new UnsupportedOperationException("Can't build CNil")
-    override def componentParsers: List[PBParser[_]] = Nil
+    private[pbdirect] override def build(): CNil = throw new UnsupportedOperationException("Can't build CNil")
+    private[pbdirect] override def componentParsers: List[PBParser[_]] = Nil
   }
 }
 
@@ -177,9 +177,9 @@ trait PBConsParser extends LowPriorityPBParserImplicits {
     componentParsersList: List[PBParser[_]],
     buildF: () => V
   ): PBParser[V] = new PBParser[V] {
-    override val componentParsers: List[PBParser[_]] = componentParsersList
-    
-    override def readFieldWithoutTag(index: NEL[Int], input: CodedInputStream, size: Option[Int]): Unit = {
+    private[pbdirect] override val componentParsers: List[PBParser[_]] = componentParsersList
+  
+    private[pbdirect] override def readFieldWithoutTag(index: NEL[Int], input: CodedInputStream, size: Option[Int]): Unit = {
       val sizeLimit = size match {
         // Our parent provided our size, which is a signal that the size field
         // is not in the stream.
@@ -209,8 +209,8 @@ trait PBConsParser extends LowPriorityPBParserImplicits {
   
       input.popLimit(oldLimit)
     }
-    
-    override def build(): V = buildF()
+  
+    private[pbdirect] override def build(): V = buildF()
   }
   
   def readCconsBytes(input: CodedInputStream, size: Option[Int]): Array[Byte] = {
