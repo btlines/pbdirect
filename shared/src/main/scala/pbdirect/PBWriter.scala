@@ -728,39 +728,3 @@ trait PBWriterImplicits extends PBConsWriter16 {
 object PBWriter extends PBWriterImplicits {
   def apply[A: PBWriter]: PBWriter[A] = implicitly
 }
-
-
-
-
-
-
-//
-//trait LowPriorityPBWriterImplicits {
-//  implicit def consWriter[H, T <: HList](implicit head: PBWriter[H], tail: Lazy[PBWriter[T]]): PBWriter[H :: T] =
-//    instance(
-//    { (index: Int, value: H :: T, out: CodedOutputStream, sizes: SizeWithoutTag) =>
-//      head.writeTo(index, value.head, out, sizes)
-//      tail.value.writeTo(index + 1, value.tail, out, sizes)
-//    },
-//    { (index: Int, value: H :: T, sizes: SizeWithoutTag) =>
-//      head.writtenBytesSize(index, value.head, sizes) +
-//      tail.value.writtenBytesSize(index + 1, value.tail, sizes)
-//    }
-//    )
-//
-//  implicit def cconsWriter[H, T <: Coproduct](implicit head: PBWriter[H], tail: PBWriter[T]): PBWriter[H :+: T] =
-//    instance(
-//    { (index: Int, value: H :+: T, out: CodedOutputStream, sizes: SizeWithoutTag) =>
-//      value match {
-//        case Inl(h) => head.writeTo(index, h, out, sizes)
-//        case Inr(t) => tail.writeTo(index, t, out, sizes)
-//      }
-//    },
-//    { (index: Int, value: H :+: T, sizes: SizeWithoutTag) =>
-//      value match {
-//        case Inl(h) => head.writtenBytesSize(index, h, sizes)
-//        case Inr(t) => tail.writtenBytesSize(index, t, sizes)
-//      }
-//    }
-//    )
-//}

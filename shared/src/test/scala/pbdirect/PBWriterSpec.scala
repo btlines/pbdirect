@@ -84,6 +84,11 @@ class PBWriterSpec extends WordSpecLike with Matchers {
       val message = EmptyMessage()
       message.toPB shouldBe Array[Byte]()
     }
+    "write a message with a single missing field to Protobuf" in {
+      case class MissingMessage(text: Option[String])
+      val message = MissingMessage(None)
+      message.toPB shouldBe Array[Byte]()
+    }
     "write a multi-field message to Protobuf" in {
       case class MultiMessage(text: Option[String], number: Option[Int])
       val message = MultiMessage(Some("Hello"), Some(3))
