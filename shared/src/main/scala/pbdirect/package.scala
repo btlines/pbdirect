@@ -1,4 +1,5 @@
 import java.io.ByteArrayOutputStream
+import java.util
 
 import cats.data.{NonEmptyList => NEL}
 import com.google.protobuf.{CodedInputStream, CodedOutputStream}
