@@ -8,7 +8,6 @@ import shapeless.ops.hlist.ToList
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import scala.collection.immutable
 import scala.util.Try
 
 /** Reads data for a single Protobuf message.  When read() is called, it is
@@ -483,12 +482,8 @@ trait PBParserImplicits extends PBConsParser16 {
     possiblyRepeatedParserWithReader(sizeHint=COLLECTION_SIZE_HINT)(reader) { values: mutable.IndexedSeq[(K, V)] => values.toMap }
   implicit def collectionMapParser[K, V](implicit reader: PBReader[(K, V)]): PBParser[collection.Map[K, V]] =
     possiblyRepeatedParserWithReader(sizeHint=COLLECTION_SIZE_HINT)(reader) { values: mutable.IndexedSeq[(K, V)] => values.toMap }
-  implicit def seqParser[A](implicit reader: PBReader[A]): PBParser[collection.Seq[A]] =
-    possiblyRepeatedParserWithReader(sizeHint=COLLECTION_SIZE_HINT)(reader) { values: mutable.IndexedSeq[A] => values }
-  implicit def immutableSeqParser[A](implicit reader: PBReader[A]): PBParser[immutable.Seq[A]] =
-    possiblyRepeatedParserWithReader(sizeHint=COLLECTION_SIZE_HINT)(reader) { values: mutable.IndexedSeq[A] => values.toIndexedSeq }
-  implicit def indexedSeqParser[A](implicit reader: PBReader[A]): PBParser[collection.IndexedSeq[A]] =
-    possiblyRepeatedParserWithReader(sizeHint=COLLECTION_SIZE_HINT)(reader) { values: mutable.IndexedSeq[A] => values }
+  implicit def seqParser[A](implicit reader: PBReader[A]): PBParser[Seq[A]] =
+    possiblyRepeatedParserWithReader(sizeHint=COLLECTION_SIZE_HINT)(reader) { values: mutable.IndexedSeq[A] => values.toSeq }
 }
 
 object PBParser extends PBParserImplicits
