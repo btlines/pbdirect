@@ -31,12 +31,12 @@ trait PBReader[A] {
   * be kept in the order they were read.
   */
 trait PBParser[A] {
-  def readFieldWithoutTag(index: NEL[Int], input: CodedInputStream, size: Option[Int]): Unit
-  private[pbdirect] def build(): A
-  private[pbdirect] def readSingleFieldAndBuild(input: CodedInputStream, size: Option[Int]): A = {
+  def readSingleFieldAndBuild(input: CodedInputStream, size: Option[Int]): A = {
     readFieldWithoutTag(NEL.one(1), input, size)
     build()
   }
+  private[pbdirect] def readFieldWithoutTag(index: NEL[Int], input: CodedInputStream, size: Option[Int]): Unit
+  private[pbdirect] def build(): A
   private[pbdirect] def componentParsers: List[PBParser[_]] = List(this)
 }
 
