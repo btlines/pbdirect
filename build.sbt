@@ -25,7 +25,7 @@ val pbdirect = crossProject(JSPlatform, JVMPlatform)
   )
   .jvmSettings(
     libraryDependencies ++= Seq(
-      "com.google.protobuf" % "protobuf-java"   % "3.8.0"
+      "com.google.protobuf" % "protobuf-java"   % "3.9.0"
     )
   )
   .jsSettings(
