@@ -1,5 +1,12 @@
 # Changelog
 
+## 09/10/2019 - Version 0.2.2
+
+Release changes:
+
+* Add support for `Short`, `Byte`, `Seq`, and `collection.Map` ([#6](https://github.com/47deg/pbdirect/pull/6))
+
+
 ## 03/02/2019 - Version 0.2.1
 
 Release changes:
