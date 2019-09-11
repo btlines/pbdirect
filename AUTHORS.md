@@ -10,6 +10,8 @@ The maintainers of the project are:
 
 These are the people that have contributed to the pbdirect project:
 
+* Akara Sucharitakul <[akara](https://github.com/akara)>
+* Ben Fradet <[BenFradet](https://github.com/BenFradet)>
 * Beyond the lines <[btlines](https://github.com/btlines)>
 * Ernesto Periñán <[eperinan](https://github.com/eperinan)>
 * Fede Fernández <[fedefernandez](https://github.com/fedefernandez)>
