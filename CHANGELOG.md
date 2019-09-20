@@ -7,6 +7,13 @@ Release changes:
 * Upgrades build ([#8](https://github.com/47deg/pbdirect/pull/8))
 
 
+## 09/20/2019 - Version 0.3.0
+
+Release changes:
+
+* Upgrades build ([#8](https://github.com/47deg/pbdirect/pull/8))
+
+
 ## 09/12/2019 - Version 0.2.3
 
 Release changes:
