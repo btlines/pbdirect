@@ -16,4 +16,5 @@ These are the people that have contributed to the pbdirect project:
 * Ernesto Periñán <[eperinan](https://github.com/eperinan)>
 * Fede Fernández <[fedefernandez](https://github.com/fedefernandez)>
 * Juan Pedro Moreno <[juanpedromoreno](https://github.com/juanpedromoreno)>
+* Scala Steward <[scala-steward](https://github.com/scala-steward)>
 * kenji yoshida <[xuwei-k](https://github.com/xuwei-k)>
