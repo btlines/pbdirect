@@ -18,11 +18,11 @@ object ProjectPlugin extends AutoPlugin {
   object autoImport {
 
     lazy val V = new {
-      val cats: String      = "1.6.0"
+      val cats: String      = "2.0.0"
       val protobuf: String  = "3.6.1"
       val scala211: String  = "2.11.12"
-      val scala212: String  = "2.12.8"
-      val scalaTest: String = "3.0.6"
+      val scala212: String  = "2.12.10"
+      val scalaTest: String = "3.0.8"
       val shapeless: String = "2.3.3"
     }
   }
