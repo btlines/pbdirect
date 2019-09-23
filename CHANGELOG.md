@@ -1,5 +1,16 @@
 # Changelog
 
+## 09/23/2019 - Version 0.3.1
+
+Release changes:
+
+* Upgrades build ([#8](https://github.com/47deg/pbdirect/pull/8))
+* Update sbt-org-policies to 0.11.3 ([#9](https://github.com/47deg/pbdirect/pull/9))
+* Update protobuf-java to 3.10.0 ([#10](https://github.com/47deg/pbdirect/pull/10))
+* Update sbt to 1.3.2 ([#12](https://github.com/47deg/pbdirect/pull/12))
+* Update sbt-updates to 0.4.2 ([#11](https://github.com/47deg/pbdirect/pull/11))
+
+
 ## 09/20/2019 - Version 0.3.0
 
 Release changes:
