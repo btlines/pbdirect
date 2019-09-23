@@ -128,7 +128,8 @@ trait PBWriterImplicits extends LowPriorityPBWriterImplicits {
     instance { (index: Int, value: Map[K, V], out: CodedOutputStream) =>
       writer.writeTo(index, value.toList, out)
     }
-  implicit def collectionMapWriter[K, V](implicit writer: PBWriter[List[(K, V)]]): PBWriter[collection.Map[K, V]] =
+  implicit def collectionMapWriter[K, V](
+      implicit writer: PBWriter[List[(K, V)]]): PBWriter[collection.Map[K, V]] =
     instance { (index: Int, value: collection.Map[K, V], out: CodedOutputStream) =>
       writer.writeTo(index, value.toList, out)
     }

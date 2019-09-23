@@ -188,7 +188,8 @@ trait PBParserImplicits extends LowPriorityPBParserImplicits {
     instance { (index: Int, bytes: Array[Byte]) =>
       parser.parse(index, bytes).toMap
     }
-  implicit def collectionMapParser[K, V](implicit parser: PBParser[List[(K, V)]]): PBParser[collection.Map[K, V]] =
+  implicit def collectionMapParser[K, V](
+      implicit parser: PBParser[List[(K, V)]]): PBParser[collection.Map[K, V]] =
     instance { (index: Int, bytes: Array[Byte]) =>
       parser.parse(index, bytes).toMap
     }

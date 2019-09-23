@@ -129,7 +129,8 @@ class PBWriterSpec extends WordSpecLike with Matchers {
     "write a scala.collection.Map to Protobuf" in {
       case class MapMessage(values: collection.Map[Int, String])
       val message = MapMessage(collection.Map(1 -> "one", 2 -> "two"))
-      message.toPB shouldBe Array[Byte](10, 7, 8, 1, 18, 3, 111, 110, 101, 10, 7, 8, 2, 18, 3, 116, 119, 111)
+      message.toPB shouldBe Array[Byte](10, 7, 8, 1, 18, 3, 111, 110, 101, 10, 7, 8, 2, 18, 3, 116,
+        119, 111)
     }
     "write a nested message to Protobuf" in {
       case class InnerMessage(value: Option[Int])
