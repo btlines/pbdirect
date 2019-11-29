@@ -23,9 +23,10 @@ package pbdirect
 
 import cats.instances.option._
 import cats.instances.list._
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
-class PBWriterSpec extends WordSpecLike with Matchers {
+class PBWriterSpec extends AnyWordSpecLike with Matchers {
   "PBWriter" should {
     "write a Boolean to Protobuf" in {
       case class BooleanMessage(value: Option[Boolean])

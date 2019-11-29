@@ -21,9 +21,10 @@
 
 package pbdirect
 
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
-class PosSpec extends WordSpecLike with Matchers {
+class PosSpec extends AnyWordSpecLike with Matchers {
 
   import Pos._
 

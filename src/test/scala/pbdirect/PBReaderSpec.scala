@@ -21,9 +21,10 @@
 
 package pbdirect
 
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
-class PBReaderSpec extends WordSpecLike with Matchers {
+class PBReaderSpec extends AnyWordSpecLike with Matchers {
   "PBReader" should {
     "read a Boolean from Protobuf" in {
       case class BooleanMessage(value: Option[Boolean])

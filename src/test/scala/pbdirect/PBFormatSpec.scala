@@ -21,9 +21,10 @@
 
 package pbdirect
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class PBFormatSpec extends WordSpec with Matchers {
+class PBFormatSpec extends AnyWordSpec with Matchers {
   import java.time.Instant
   import cats.syntax.invariant._
 

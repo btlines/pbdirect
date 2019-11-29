@@ -21,9 +21,10 @@
 
 package pbdirect
 
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
-class EnumSpec extends WordSpecLike with Matchers {
+class EnumSpec extends AnyWordSpecLike with Matchers {
 
   sealed trait WeekDay  extends Pos
   case object Monday    extends WeekDay with Pos._1
