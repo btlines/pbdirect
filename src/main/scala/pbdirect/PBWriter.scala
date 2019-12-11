@@ -26,6 +26,7 @@ import java.io.ByteArrayOutputStream
 import cats.{Contravariant, Functor}
 import com.google.protobuf.CodedOutputStream
 import shapeless.{:+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Lazy}
+import enumeratum.values.IntEnumEntry
 
 trait PBWriter[A] {
   def writeTo(index: Int, value: A, out: CodedOutputStream): Unit
@@ -144,6 +145,10 @@ trait PBWriterImplicits extends LowPriorityPBWriterImplicits {
   implicit def enumerationWriter[E <: Enumeration#Value]: PBWriter[E] =
     instance { (index: Int, value: E, out: CodedOutputStream) =>
       out.writeInt32(index, value.id)
+    }
+  implicit def enumeratumIntEnumEntryWriter[E <: IntEnumEntry]: PBWriter[E] =
+    instance { (index: Int, entry: E, out: CodedOutputStream) =>
+      out.writeInt32(index, entry.value)
     }
 
   implicit object ContravariantWriter extends Contravariant[PBWriter] {

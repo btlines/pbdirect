@@ -24,6 +24,7 @@ object ProjectPlugin extends AutoPlugin {
       val scala212: String  = "2.12.10"
       val scalaTest: String = "3.1.0"
       val shapeless: String = "2.3.3"
+      val enumeratum: String  = "1.5.13"
     }
   }
 
@@ -60,6 +61,7 @@ object ProjectPlugin extends AutoPlugin {
         "com.chuusai"         %% "shapeless"    % V.shapeless,
         "org.typelevel"       %% "cats-core"    % V.cats,
         "com.google.protobuf" % "protobuf-java" % V.protobuf,
+        "com.beachape"        %% "enumeratum"   % V.enumeratum,
         "org.scalatest"       %% "scalatest"    % V.scalaTest % Test
       ),
       orgScriptTaskListSetting := List(
