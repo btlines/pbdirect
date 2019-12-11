@@ -91,6 +91,23 @@ class PBWriterSpec extends AnyWordSpecLike with Matchers {
       messageA.toPB shouldBe Array[Byte](8, 0)
       messageB.toPB shouldBe Array[Byte](8, 1)
     }
+    "write an enumeratum IntEnumEntry to Protobuf" in {
+      import enumeratum.values._
+
+      sealed abstract class Quality(val value: Int) extends IntEnumEntry
+
+      object Quality extends IntEnum[Quality] {
+        case object Good extends Quality(0)
+        case object OK   extends Quality(3)
+        case object Bad  extends Quality(5)
+
+        val values = findValues
+      }
+
+      case class QualityMessage(quality: Quality)
+      val message = QualityMessage(Quality.OK)
+      message.toPB shouldBe Array[Byte](8, 3)
+    }
     "write a required field to Protobuf" in {
       case class RequiredMessage(value: Int)
       val message = RequiredMessage(5)

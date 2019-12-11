@@ -23,8 +23,10 @@ package pbdirect
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+import enumeratum.values._
 
 class PBReaderSpec extends AnyWordSpecLike with Matchers {
+
   "PBReader" should {
     "read a Boolean from Protobuf" in {
       case class BooleanMessage(value: Option[Boolean])
@@ -90,6 +92,11 @@ class PBReaderSpec extends AnyWordSpecLike with Matchers {
       val bytesB = Array[Byte](8, 1)
       bytesA.pbTo[GradeMessage] shouldBe GradeMessage(Some(GradeA))
       bytesB.pbTo[GradeMessage] shouldBe GradeMessage(Some(GradeB))
+    }
+    "read an enumeratum IntEnumEntry from Protobuf" in {
+      case class QualityMessage(quality: Quality)
+      val bytes = Array[Byte](8, 3)
+      bytes.pbTo[QualityMessage] shouldBe QualityMessage(Quality.OK)
     }
     "read a required field from Protobuf" in {
       case class RequiredMessage(value: Int)
@@ -166,4 +173,15 @@ class PBReaderSpec extends AnyWordSpecLike with Matchers {
       Array[Byte](8, -127, -55, -2, -34, -47, 43).pbTo[Message] shouldBe Message(instant)
     }
   }
+}
+
+// For some reason it fails to resolve the implicit PBReader if the enum is defined inside the test class
+sealed abstract class Quality(val value: Int) extends IntEnumEntry
+
+object Quality extends IntEnum[Quality] {
+  case object Good extends Quality(0)
+  case object OK   extends Quality(3)
+  case object Bad  extends Quality(5)
+
+  val values = findValues
 }
