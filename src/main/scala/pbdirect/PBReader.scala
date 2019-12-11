@@ -26,6 +26,7 @@ import java.io.ByteArrayOutputStream
 import cats.Functor
 import com.google.protobuf.{CodedInputStream, CodedOutputStream}
 import shapeless.{:+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Lazy}
+import enumeratum.values.{IntEnum, IntEnumEntry}
 
 import scala.util.Try
 
@@ -75,6 +76,12 @@ trait PBReaderImplicits extends LowerPriorityPBReaderImplicits {
       gen: Generic.Aux[E, HNil]): PBReader[E#Value] = instance { (input: CodedInputStream) =>
     val enum = gen.from(HNil)
     enum(reader.read(input))
+  }
+  implicit def enumeratumIntEnumEntryReader[E <: IntEnumEntry](
+      implicit
+      reader: PBReader[Int],
+      enum: IntEnum[E]): PBReader[E] = instance { (input: CodedInputStream) =>
+    enum.withValue(reader.read(input))
   }
 }
 object PBReader extends PBReaderImplicits {
