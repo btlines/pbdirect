@@ -13,6 +13,7 @@ These are the people that have contributed to the pbdirect project:
 * Akara Sucharitakul <[akara](https://github.com/akara)>
 * Ben Fradet <[BenFradet](https://github.com/BenFradet)>
 * Beyond the lines <[btlines](https://github.com/btlines)>
+* Chris Birchall <[cb372](https://github.com/cb372)>
 * Ernesto Periñán <[eperinan](https://github.com/eperinan)>
 * Fede Fernández <[fedefernandez](https://github.com/fedefernandez)>
 * Juan Pedro Moreno <[juanpedromoreno](https://github.com/juanpedromoreno)>
