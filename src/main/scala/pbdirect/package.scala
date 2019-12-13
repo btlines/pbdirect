@@ -21,20 +21,16 @@
 
 import java.io.ByteArrayOutputStream
 
-import com.google.protobuf.{CodedInputStream, CodedOutputStream}
+import com.google.protobuf.CodedOutputStream
 
 package object pbdirect {
   implicit class PBWriterOps[A](private val a: A) extends AnyVal {
-    def toPB(implicit writer: PBWriter[A]): Array[Byte] = {
+    def toPB(implicit writer: PBMessageWriter[A]): Array[Byte] = {
       val out   = new ByteArrayOutputStream()
       val pbOut = CodedOutputStream.newInstance(out)
-      writer.writeTo(1, a, pbOut)
+      writer.writeTo(a, pbOut)
       pbOut.flush()
-      val bytes = out.toByteArray
-      // remove the tag and return the content
-      val input = CodedInputStream.newInstance(bytes)
-      input.readTag()
-      input.readByteArray()
+      out.toByteArray
     }
   }
   implicit class PBParserOps(private val bytes: Array[Byte]) extends AnyVal {
