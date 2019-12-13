@@ -147,6 +147,9 @@ trait PBFieldWriterImplicits {
     override def writeTo(index: Int, value: Array[Byte], out: CodedOutputStream): Unit =
       out.writeByteArray(index, value)
   }
+  // TODO this is cute but it means users need to import cats.instances.list._
+  // if they want to use lists or maps. Could be quite confusing.
+  // Maybe add a specialised instance for List[A] as well?
   implicit def functorWriter[F[_], A](
       implicit functor: Functor[F],
       writer: PBFieldWriter[A]): PBFieldWriter[F[A]] =
@@ -155,6 +158,17 @@ trait PBFieldWriterImplicits {
         writer.writeTo(index, v, out)
       }
       ()
+    }
+  implicit def keyValuePairWriter[K, V](
+      implicit keyWriter: PBFieldWriter[K],
+      valueWriter: PBFieldWriter[V]): PBFieldWriter[(K, V)] =
+    instance { (index: Int, pair: (K, V), out: CodedOutputStream) =>
+      val buffer    = new ByteArrayOutputStream()
+      val bufferOut = CodedOutputStream.newInstance(buffer)
+      keyWriter.writeTo(1, pair._1, bufferOut)
+      valueWriter.writeTo(2, pair._2, bufferOut)
+      bufferOut.flush()
+      out.writeByteArray(index, buffer.toByteArray)
     }
   implicit def mapWriter[K, V](
       implicit writer: PBFieldWriter[List[(K, V)]]): PBFieldWriter[Map[K, V]] =

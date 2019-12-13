@@ -139,19 +139,18 @@ class PBWriterSpec extends AnyWordSpecLike with Matchers {
       val message = RepeatedMessage(Seq(1, 2, 3, 4))
       message.toPB shouldBe Array[Byte](8, 1, 8, 2, 8, 3, 8, 4)
     }
-    // TODO investigate
-    //"write a Map to Protobuf" in {
-    //case class MapMessage(@pbIndex(1) values: Map[Int, String])
-    //val message = MapMessage(Map(1 -> "one", 2 -> "two"))
-    //message.toPB shouldBe Array[Byte](10, 7, 8, 1, 18, 3, 111, 110, 101, 10, 7, 8, 2, 18, 3, 116,
-    //119, 111)
-    //}
-    //"write a scala.collection.Map to Protobuf" in {
-    //case class MapMessage(@pbIndex(1) values: collection.Map[Int, String])
-    //val message = MapMessage(collection.Map(1 -> "one", 2 -> "two"))
-    //message.toPB shouldBe Array[Byte](10, 7, 8, 1, 18, 3, 111, 110, 101, 10, 7, 8, 2, 18, 3, 116,
-    //119, 111)
-    //}
+    "write a Map to Protobuf" in {
+      case class MapMessage(@pbIndex(1) values: Map[Int, String])
+      val message = MapMessage(Map(1 -> "one", 2 -> "two"))
+      message.toPB shouldBe Array[Byte](10, 7, 8, 1, 18, 3, 111, 110, 101, 10, 7, 8, 2, 18, 3, 116,
+        119, 111)
+    }
+    "write a scala.collection.Map to Protobuf" in {
+      case class MapMessage(@pbIndex(1) values: collection.Map[Int, String])
+      val message = MapMessage(collection.Map(1 -> "one", 2 -> "two"))
+      message.toPB shouldBe Array[Byte](10, 7, 8, 1, 18, 3, 111, 110, 101, 10, 7, 8, 2, 18, 3, 116,
+        119, 111)
+    }
     "write a nested message to Protobuf" in {
       case class InnerMessage(@pbIndex(1) value: Option[Int])
       case class OuterMessage(
