@@ -175,30 +175,30 @@ class PBWriterSpec extends AnyWordSpecLike with Matchers {
       val message = OuterMessage(Some("Hello"), None)
       message.toPB shouldBe Array[Byte](10, 5, 72, 101, 108, 108, 111)
     }
-    //"write a sealed trait to Protobuf" in {
-    //sealed trait Message
-    //case class IntMessage(@pbIndex(1) value: Option[Int])       extends Message
-    //case class StringMessage(@pbIndex(1) value: Option[String]) extends Message
-    //val intMessage: Message    = IntMessage(Some(5))
-    //val stringMessage: Message = StringMessage(Some("Hello"))
-    //intMessage.toPB shouldBe Array[Byte](8, 5)
-    //stringMessage.toPB shouldBe Array[Byte](10, 5, 72, 101, 108, 108, 111)
-    //}
-    //"write a message with repeated nested message in Protobuf" in {
-    //case class Metric(
-    //@pbIndex(1) metric: String,
-    //@pbIndex(2) microservice: String,
-    //@pbIndex(3) node: String,
-    //@pbIndex(4) value: Float,
-    //@pbIndex(5) count: Int)
-    //case class Metrics(@pbIndex(1) metrics: List[Metric])
-    //val message = Metrics(
-    //Metric("metric", "microservices", "node", 12F, 12345) :: Nil
-    //)
-    //message.toPB shouldBe Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109,
-    //105, 99, 114, 111, 115, 101, 114, 118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0,
-    //0, 64, 65, 40, -71, 96)
-    //}
+    "write a sealed trait to Protobuf" in {
+      sealed trait Message
+      case class IntMessage(@pbIndex(1) value: Option[Int])       extends Message
+      case class StringMessage(@pbIndex(1) value: Option[String]) extends Message
+      val intMessage: Message    = IntMessage(Some(5))
+      val stringMessage: Message = StringMessage(Some("Hello"))
+      intMessage.toPB shouldBe Array[Byte](8, 5)
+      stringMessage.toPB shouldBe Array[Byte](10, 5, 72, 101, 108, 108, 111)
+    }
+    "write a message with repeated nested message in Protobuf" in {
+      case class Metric(
+          @pbIndex(1) metric: String,
+          @pbIndex(2) microservice: String,
+          @pbIndex(3) node: String,
+          @pbIndex(4) value: Float,
+          @pbIndex(5) count: Int)
+      case class Metrics(@pbIndex(1) metrics: List[Metric])
+      val message = Metrics(
+        Metric("metric", "microservices", "node", 12F, 12345) :: Nil
+      )
+      message.toPB shouldBe Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109,
+        105, 99, 114, 111, 115, 101, 114, 118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0,
+        0, 64, 65, 40, -71, 96)
+    }
     "derive new instance using contramap" in {
       import java.time.Instant
       import cats.syntax.contravariant._

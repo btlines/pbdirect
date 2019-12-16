@@ -73,36 +73,36 @@ trait PBMessageWriterImplicits {
       writer.value.writeTo(indexedFields, out)
     }
 
-  //implicit val cnilWriter: PBWriter[CNil] = instance { (_: Int, _: CNil, _: CodedOutputStream) =>
-  //throw new Exception("Can't write CNil")
-  //}
-  //implicit def cconsWriter[H, T <: Coproduct](
-  //implicit head: PBWriter[H],
-  //tail: PBWriter[T]): PBWriter[H :+: T] =
-  //instance { (index: Int, value: H :+: T, out: CodedOutputStream) =>
-  //value match {
-  //case Inl(h) => head.writeTo(index, h, out)
-  //case Inr(t) => tail.writeTo(index, t, out)
-  //}
-  //}
-  //implicit def coprodWriter[A, R <: Coproduct](
-  //implicit gen: Generic.Aux[A, R],
-  //writer: PBWriter[R]): PBWriter[A] =
-  //instance { (index: Int, value: A, out: CodedOutputStream) =>
-  //writer.writeTo(index, gen.to(value), out)
-  //}
+  implicit val cnilWriter: PBMessageWriter[CNil] = instance { (_: CNil, _: CodedOutputStream) =>
+    throw new Exception("Can't write CNil")
+  }
+  implicit def cconsWriter[H, T <: Coproduct](
+      implicit head: PBMessageWriter[H],
+      tail: PBMessageWriter[T]): PBMessageWriter[H :+: T] =
+    instance { (value: H :+: T, out: CodedOutputStream) =>
+      value match {
+        case Inl(h) => head.writeTo(h, out)
+        case Inr(t) => tail.writeTo(t, out)
+      }
+    }
+  implicit def coprodWriter[A, R <: Coproduct](
+      implicit gen: Generic.Aux[A, R],
+      writer: PBMessageWriter[R]): PBMessageWriter[A] =
+    instance { (value: A, out: CodedOutputStream) =>
+      writer.writeTo(gen.to(value), out)
+    }
 
 }
 
-trait PBFieldWriterImplicits {
+trait LowPriorityPBFieldWriterImplicits {
   def instance[A](f: (Int, A, CodedOutputStream) => Unit): PBFieldWriter[A] =
     new PBFieldWriter[A] {
       override def writeTo(index: Int, value: A, out: CodedOutputStream): Unit =
         f(index, value, out)
     }
   implicit def embeddedMessageFieldWriter[A](
-      implicit messageWriter: PBMessageWriter[A]): PBFieldWriter[A] = instance {
-    (index, message, out) =>
+      implicit messageWriter: PBMessageWriter[A]): PBFieldWriter[A] =
+    instance { (index, message, out) =>
       {
         val buffer    = new ByteArrayOutputStream()
         val bufferOut = CodedOutputStream.newInstance(buffer)
@@ -110,7 +110,10 @@ trait PBFieldWriterImplicits {
         bufferOut.flush()
         out.writeByteArray(index, buffer.toByteArray)
       }
-  }
+    }
+}
+
+trait PBFieldWriterImplicits extends LowPriorityPBFieldWriterImplicits {
   implicit object BooleanWriter extends PBFieldWriter[Boolean] {
     override def writeTo(index: Int, value: Boolean, out: CodedOutputStream): Unit =
       out.writeBool(index, value)
@@ -149,7 +152,7 @@ trait PBFieldWriterImplicits {
   }
   // TODO this is cute but it means users need to import cats.instances.list._
   // if they want to use lists or maps. Could be quite confusing.
-  // Maybe add a specialised instance for List[A] as well?
+  // Maybe add specialised instances for List[A] and Option[A] as well?
   implicit def functorWriter[F[_], A](
       implicit functor: Functor[F],
       writer: PBFieldWriter[A]): PBFieldWriter[F[A]] =
