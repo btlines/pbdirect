@@ -111,6 +111,15 @@ trait LowPriorityPBFieldWriterImplicits {
         out.writeByteArray(index, buffer.toByteArray)
       }
     }
+  implicit def functorWriter[F[_], A](
+      implicit functor: Functor[F],
+      writer: PBFieldWriter[A]): PBFieldWriter[F[A]] =
+    instance { (index: Int, value: F[A], out: CodedOutputStream) =>
+      functor.map(value) { v =>
+        writer.writeTo(index, v, out)
+      }
+      ()
+    }
 }
 
 trait PBFieldWriterImplicits extends LowPriorityPBFieldWriterImplicits {
@@ -150,17 +159,13 @@ trait PBFieldWriterImplicits extends LowPriorityPBFieldWriterImplicits {
     override def writeTo(index: Int, value: Array[Byte], out: CodedOutputStream): Unit =
       out.writeByteArray(index, value)
   }
-  // TODO this is cute but it means users need to import cats.instances.list._
-  // if they want to use lists or maps. Could be quite confusing.
-  // Maybe add specialised instances for List[A] and Option[A] as well?
-  implicit def functorWriter[F[_], A](
-      implicit functor: Functor[F],
-      writer: PBFieldWriter[A]): PBFieldWriter[F[A]] =
-    instance { (index: Int, value: F[A], out: CodedOutputStream) =>
-      functor.map(value) { v =>
-        writer.writeTo(index, v, out)
-      }
-      ()
+  implicit def optionWriter[A](implicit writer: PBFieldWriter[A]): PBFieldWriter[Option[A]] =
+    instance { (index: Int, option: Option[A], out: CodedOutputStream) =>
+      option.foreach(v => writer.writeTo(index, v, out))
+    }
+  implicit def listWriter[A](implicit writer: PBFieldWriter[A]): PBFieldWriter[List[A]] =
+    instance { (index: Int, list: List[A], out: CodedOutputStream) =>
+      list.foreach(v => writer.writeTo(index, v, out))
     }
   implicit def keyValuePairWriter[K, V](
       implicit keyWriter: PBFieldWriter[K],

@@ -40,7 +40,6 @@ class PBFormatSpec extends AnyWordSpec with Matchers {
       bytes.pbTo[Message] shouldBe Message(instant)
     }
     "derived optional instances using imap" in {
-      import cats.instances.option._
       case class Message(@pbIndex(1) instant: Option[Instant])
       val instant = Instant.ofEpochMilli(1499411227777L)
       val bytes   = Message(Some(instant)).toPB

@@ -21,8 +21,6 @@
 
 package pbdirect
 
-import cats.instances.option._
-import cats.instances.list._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
