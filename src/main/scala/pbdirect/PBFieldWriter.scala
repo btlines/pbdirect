@@ -25,73 +25,10 @@ import java.io.ByteArrayOutputStream
 
 import cats.{Contravariant, Functor}
 import com.google.protobuf.CodedOutputStream
-import shapeless._
-import shapeless.ops.hlist._
 import enumeratum.values.IntEnumEntry
-
-trait PBMessageWriter[A] {
-  def writeTo(value: A, out: CodedOutputStream): Unit
-}
 
 trait PBFieldWriter[A] {
   def writeTo(index: Int, value: A, out: CodedOutputStream): Unit
-}
-
-case class FieldIndex(value: Int)
-
-trait PBMessageWriterImplicits {
-  def instance[A](f: (A, CodedOutputStream) => Unit): PBMessageWriter[A] =
-    new PBMessageWriter[A] {
-      override def writeTo(value: A, out: CodedOutputStream): Unit =
-        f(value, out)
-    }
-  implicit val hnilWriter: PBMessageWriter[HNil] = instance { (_: HNil, _: CodedOutputStream) =>
-    ()
-  }
-  implicit def consWriter[H, T <: HList](
-      implicit head: PBFieldWriter[H],
-      tail: Lazy[PBMessageWriter[T]]): PBMessageWriter[(FieldIndex, H) :: T] =
-    instance { (value: (FieldIndex, H) :: T, out: CodedOutputStream) =>
-      head.writeTo(value.head._1.value, value.head._2, out)
-      tail.value.writeTo(value.tail, out)
-    }
-
-  object zipWithIndex extends Poly2 {
-    implicit def defaultCase[T] = at[Some[pbIndex], T] {
-      case (Some(annotation), value) => (FieldIndex(annotation.value), value)
-    }
-  }
-
-  implicit def prodWriter[A, R <: HList, Anns <: HList, Z <: HList](
-      implicit gen: Generic.Aux[A, R],
-      annotations: Annotations.Aux[pbIndex, A, Anns],
-      zw: ZipWith.Aux[Anns, R, zipWithIndex.type, Z],
-      writer: Lazy[PBMessageWriter[Z]]): PBMessageWriter[A] =
-    instance { (value: A, out: CodedOutputStream) =>
-      val fields        = gen.to(value)
-      val indexedFields = annotations.apply.zipWith(fields)(zipWithIndex)
-      writer.value.writeTo(indexedFields, out)
-    }
-
-  implicit val cnilWriter: PBMessageWriter[CNil] = instance { (_: CNil, _: CodedOutputStream) =>
-    throw new Exception("Can't write CNil")
-  }
-  implicit def cconsWriter[H, T <: Coproduct](
-      implicit head: PBMessageWriter[H],
-      tail: PBMessageWriter[T]): PBMessageWriter[H :+: T] =
-    instance { (value: H :+: T, out: CodedOutputStream) =>
-      value match {
-        case Inl(h) => head.writeTo(h, out)
-        case Inr(t) => tail.writeTo(t, out)
-      }
-    }
-  implicit def coprodWriter[A, R <: Coproduct](
-      implicit gen: Generic.Aux[A, R],
-      writer: PBMessageWriter[R]): PBMessageWriter[A] =
-    instance { (value: A, out: CodedOutputStream) =>
-      writer.writeTo(gen.to(value), out)
-    }
-
 }
 
 trait LowPriorityPBFieldWriterImplicits {
@@ -213,10 +150,6 @@ trait PBFieldWriterImplicits extends LowPriorityPBFieldWriterImplicits {
         writer.writeTo(index, f(b), out)
       }
   }
-}
-
-object PBMessageWriter extends PBMessageWriterImplicits {
-  def apply[A: PBMessageWriter]: PBMessageWriter[A] = implicitly
 }
 
 object PBFieldWriter extends PBFieldWriterImplicits {
