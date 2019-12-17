@@ -18,13 +18,15 @@ object ProjectPlugin extends AutoPlugin {
   object autoImport {
 
     lazy val V = new {
-      val cats: String      = "2.0.0"
-      val protobuf: String  = "3.11.1"
-      val scala211: String  = "2.11.12"
-      val scala212: String  = "2.12.10"
-      val scalaTest: String = "3.1.0"
-      val shapeless: String = "2.3.3"
-      val enumeratum: String  = "1.5.14"
+      val cats: String                = "2.0.0"
+      val protobuf: String            = "3.11.1"
+      val scala211: String            = "2.11.12"
+      val scala212: String            = "2.12.10"
+      val shapeless: String           = "2.3.3"
+      val enumeratum: String          = "1.5.14"
+      val scalaTest: String           = "3.1.0"
+      val scalatestScalacheck: String = "3.1.0.0"
+      val scalacheckShapeless: String = "1.2.3"
     }
   }
 
@@ -58,11 +60,13 @@ object ProjectPlugin extends AutoPlugin {
       scalaVersion := V.scala212,
       crossScalaVersions := Seq(scalaVersion.value, V.scala211),
       libraryDependencies ++= Seq(
-        "com.chuusai"         %% "shapeless"    % V.shapeless,
-        "org.typelevel"       %% "cats-core"    % V.cats,
-        "com.google.protobuf" % "protobuf-java" % V.protobuf,
-        "com.beachape"        %% "enumeratum"   % V.enumeratum,
-        "org.scalatest"       %% "scalatest"    % V.scalaTest % Test
+        "com.chuusai"                %% "shapeless"                 % V.shapeless,
+        "org.typelevel"              %% "cats-core"                 % V.cats,
+        "com.google.protobuf"        % "protobuf-java"              % V.protobuf,
+        "com.beachape"               %% "enumeratum"                % V.enumeratum,
+        "org.scalatest"              %% "scalatest"                 % V.scalaTest % Test,
+        "org.scalatestplus"          %% "scalacheck-1-14"           % V.scalatestScalacheck % Test,
+        "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % V.scalacheckShapeless % Test
       ),
       orgScriptTaskListSetting := List(
         (clean in Global).asRunnableItemFull,
