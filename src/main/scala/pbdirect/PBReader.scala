@@ -25,7 +25,8 @@ import java.io.ByteArrayOutputStream
 
 import cats.Functor
 import com.google.protobuf.{CodedInputStream, CodedOutputStream}
-import shapeless.{:+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, Lazy}
+import shapeless._
+import shapeless.ops.hlist._
 import enumeratum.values.{IntEnum, IntEnumEntry}
 
 import scala.util.Try
@@ -33,6 +34,29 @@ import scala.util.Try
 trait PBReader[A] {
   def read(input: CodedInputStream): A
 }
+
+trait PBProductReader[R <: HList, I <: HList] {
+  def read(indices: I, bytes: Array[Byte]): R
+}
+object PBProductReader {
+  def instance[R <: HList, I <: HList](f: (I, Array[Byte]) => R): PBProductReader[R, I] =
+    new PBProductReader[R, I] {
+      def read(indices: I, bytes: Array[Byte]): R = f(indices, bytes)
+    }
+  implicit val hnilProductReader: PBProductReader[HNil, HNil] = PBProductReader.instance {
+    (indices: HNil, bytes: Array[Byte]) =>
+      HNil
+  }
+  implicit def consProductReader[H, T <: HList, IT <: HList](
+      implicit
+      headParser: PBParser[H],
+      tail: Lazy[PBProductReader[T, IT]]): PBProductReader[H :: T, FieldIndex :: IT] =
+    PBProductReader.instance { (indices: FieldIndex :: IT, bytes: Array[Byte]) =>
+      headParser.parse(indices.head.value, bytes) :: tail.value.read(indices.tail, bytes)
+    }
+
+}
+
 trait LowerPriorityPBReaderImplicits {
   def instance[A](f: CodedInputStream => A): PBReader[A] =
     new PBReader[A] {
@@ -53,14 +77,24 @@ trait LowerPriorityPBReaderImplicits {
     gen.from(repr.value.parse(1, out.toByteArray))
   }
 }
+
 trait PBReaderImplicits extends LowerPriorityPBReaderImplicits {
 
-  implicit def prodReader[A, R <: HList](
+  object collectFieldIndices extends Poly1 {
+    implicit val defaultCase = at[Some[pbIndex]] {
+      case Some(annotation) => FieldIndex(annotation.value)
+    }
+  }
+
+  implicit def prodReader[A, R <: HList, Anns <: HList, I <: HList](
       implicit
       gen: Generic.Aux[A, R],
-      repr: Lazy[PBParser[R]]): PBReader[A] = instance { (input: CodedInputStream) =>
-    val bytes = input.readByteArray()
-    gen.from(repr.value.parse(1, bytes))
+      annotations: Annotations.Aux[pbIndex, A, Anns],
+      indices: Mapper.Aux[collectFieldIndices.type, Anns, I],
+      reader: Lazy[PBProductReader[R, I]]): PBReader[A] = instance { (input: CodedInputStream) =>
+    val fieldIndices = annotations.apply.map(collectFieldIndices)
+    val bytes        = input.readByteArray()
+    gen.from(reader.value.read(fieldIndices, bytes))
   }
 
   implicit def enumReader[A](
@@ -82,6 +116,14 @@ trait PBReaderImplicits extends LowerPriorityPBReaderImplicits {
       reader: PBReader[Int],
       enum: IntEnum[E]): PBReader[E] = instance { (input: CodedInputStream) =>
     enum.withValue(reader.read(input))
+  }
+  implicit def keyValuePairReader[K, V](
+      implicit keyParser: PBParser[K],
+      valueParser: PBParser[V]): PBReader[(K, V)] = instance { (input: CodedInputStream) =>
+    val bytes = input.readByteArray()
+    val key   = keyParser.parse(1, bytes)
+    val value = valueParser.parse(2, bytes)
+    (key, value)
   }
 }
 object PBReader extends PBReaderImplicits {
@@ -132,15 +174,6 @@ trait PBParser[A] {
 trait LowPriorityPBParserImplicits {
   def instance[A](f: (Int, Array[Byte]) => A): PBParser[A] = new PBParser[A] {
     override def parse(index: Int, bytes: Array[Byte]): A = f(index, bytes)
-  }
-  implicit val hnilParser: PBParser[HNil] = instance { (index: Int, bytes: Array[Byte]) =>
-    HNil
-  }
-  implicit def consParser[H, T <: HList](
-      implicit
-      head: PBParser[H],
-      tail: Lazy[PBParser[T]]): PBParser[H :: T] = instance { (index: Int, bytes: Array[Byte]) =>
-    head.parse(index, bytes) :: tail.value.parse(index + 1, bytes)
   }
 
   implicit val cnilParser: PBParser[CNil] = instance { (index: Int, bytes: Array[Byte]) =>

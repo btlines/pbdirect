@@ -29,8 +29,6 @@ trait PBMessageWriter[A] {
   def writeTo(value: A, out: CodedOutputStream): Unit
 }
 
-case class FieldIndex(value: Int)
-
 trait PBMessageWriterImplicits {
   def instance[A](f: (A, CodedOutputStream) => Unit): PBMessageWriter[A] =
     new PBMessageWriter[A] {
@@ -48,7 +46,7 @@ trait PBMessageWriterImplicits {
       tail.value.writeTo(value.tail, out)
     }
 
-  object zipWithIndex extends Poly2 {
+  object zipWithFieldIndex extends Poly2 {
     implicit def defaultCase[T] = at[Some[pbIndex], T] {
       case (Some(annotation), value) => (FieldIndex(annotation.value), value)
     }
@@ -57,11 +55,11 @@ trait PBMessageWriterImplicits {
   implicit def prodWriter[A, R <: HList, Anns <: HList, Z <: HList](
       implicit gen: Generic.Aux[A, R],
       annotations: Annotations.Aux[pbIndex, A, Anns],
-      zw: ZipWith.Aux[Anns, R, zipWithIndex.type, Z],
+      zw: ZipWith.Aux[Anns, R, zipWithFieldIndex.type, Z],
       writer: Lazy[PBMessageWriter[Z]]): PBMessageWriter[A] =
     instance { (value: A, out: CodedOutputStream) =>
       val fields        = gen.to(value)
-      val indexedFields = annotations.apply.zipWith(fields)(zipWithIndex)
+      val indexedFields = annotations.apply.zipWith(fields)(zipWithFieldIndex)
       writer.value.writeTo(indexedFields, out)
     }
 
