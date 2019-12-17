@@ -52,7 +52,7 @@ object PBProductReader {
       headParser: PBParser[H],
       tail: Lazy[PBProductReader[T, IT]]): PBProductReader[H :: T, FieldIndex :: IT] =
     PBProductReader.instance { (indices: FieldIndex :: IT, bytes: Array[Byte]) =>
-      headParser.parse(indices.head.value, bytes) :: tail.value.read(indices.tail, bytes)
+      headParser.parse(indices.head.values.head, bytes) :: tail.value.read(indices.tail, bytes)
     }
 
 }
@@ -82,7 +82,7 @@ trait PBReaderImplicits extends LowerPriorityPBReaderImplicits {
 
   object collectFieldIndices extends Poly1 {
     implicit val defaultCase = at[Some[pbIndex]] {
-      case Some(annotation) => FieldIndex(annotation.value)
+      case Some(annotation) => FieldIndex(annotation.first :: annotation.more.toList)
     }
   }
 

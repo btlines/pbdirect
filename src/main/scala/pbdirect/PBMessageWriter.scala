@@ -42,13 +42,16 @@ trait PBMessageWriterImplicits {
       implicit head: PBFieldWriter[H],
       tail: Lazy[PBMessageWriter[T]]): PBMessageWriter[(FieldIndex, H) :: T] =
     instance { (value: (FieldIndex, H) :: T, out: CodedOutputStream) =>
-      head.writeTo(value.head._1.value, value.head._2, out)
+      val headIndex = value.head._1.values.head
+      val headValue = value.head._2
+      head.writeTo(headIndex, headValue, out)
       tail.value.writeTo(value.tail, out)
     }
 
   object zipWithFieldIndex extends Poly2 {
     implicit def defaultCase[T] = at[Some[pbIndex], T] {
-      case (Some(annotation), value) => (FieldIndex(annotation.value), value)
+      case (Some(annotation), value) =>
+        (FieldIndex(annotation.first :: annotation.more.toList), value)
     }
   }
 
