@@ -122,8 +122,8 @@ And for a writer you simply contramap over it:
 import java.time.Instant
 import cats.syntax.contravariant._
 
-implicit val instantWriter: PBWriter[Instant] =
-  PBWriter[Long].contramap(_.toEpochMilli)
+implicit val instantWriter: PBFieldWriter[Instant] =
+  PBFieldWriter[Long].contramap(_.toEpochMilli)
   )
 ```
 
