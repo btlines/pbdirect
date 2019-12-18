@@ -39,12 +39,8 @@ PBDirect depends on:
 In order to use PBDirect you need to import the following:
 
 ```scala
-import cats.instances.list._
-import cats.instances.option._
 import pbdirect._
 ```
-
-*Note*: It's not recommended to use `import cats.instances.all._` as it may cause issues with implicit resolution.
 
 ## Example
 
@@ -54,9 +50,9 @@ PBDirect serialises case classes into protobuf and there is no need for a .proto
 
 ```scala
 case class MyMessage(
-  id: Option[Int], 
-  text: Option[String], 
-  numbers: List[Int]
+  @pbIndex(1) id: Option[Int],
+  @pbIndex(3) text: Option[String],
+  @pbIndex(5) numbers: List[Int]
 )
 ```
 
@@ -65,12 +61,12 @@ is equivalent to the following protobuf definition:
 ```protobuf
 message MyMessage {
    optional int32  id      = 1;
-   optional string text    = 2;
-   repeated int32  numbers = 3;
+   optional string text    = 3;
+   repeated int32  numbers = 5;
 }
 ```
 
-The field numbers correspond to the order of the fields inside the case class.
+Note that the `@pbIndex` annotation is mandatory on all fields of a message.
 
 ### Serialization
 
@@ -83,6 +79,7 @@ val message = MyMessage(
   numbers = List(1, 2, 3, 4)
 )
 val bytes = message.toPB
+// bytes: Array(8, 123, 26, 5, 72, 101, 108, 108, 111, 40, 1, 40, 2, 40, 3, 40, 4)
 ```
 
 ### Deserialization
@@ -91,8 +88,9 @@ Deserializing bytes into a case class is also straight forward. You only need to
 This method is added implicitly on all `Array[Byte]` by importing `pbdirect._`.
 
 ```scala
-val bytes: Array[Byte] = Array[Byte](8, 123, 18, 5, 72, 101, 108, 108, 111, 24, 1, 32, 2, 40, 3, 48, 4)
+val bytes: Array[Byte] = Array[Byte](8, 123, 26, 5, 72, 101, 108, 108, 111, 40, 1, 40, 2, 40, 3, 40, 4)
 val message = bytes.pbTo[MyMessage]
+// message: MyMessage(Some(123),Some(hello),List(1, 2, 3, 4))
 ```
 
 ## Extension
