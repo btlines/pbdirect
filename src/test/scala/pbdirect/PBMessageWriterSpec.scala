@@ -56,6 +56,11 @@ class PBMessageWriterSpec extends AnyWordSpecLike with Matchers {
       val message = MultiMessage(Some("Hello"), Some(3))
       message.toPB shouldBe Array[Byte](10, 5, 72, 101, 108, 108, 111, 16, 3)
     }
+    "write a multi-field message without pbIndex annotations to Protobuf" in {
+      case class MultiMessage(text: Option[String], number: Option[Int])
+      val message = MultiMessage(Some("Hello"), Some(3))
+      message.toPB shouldBe Array[Byte](10, 5, 72, 101, 108, 108, 111, 16, 3)
+    }
     "write a message with repeated field to Protobuf" in {
       case class RepeatedMessage(@pbIndex(1) values: List[Int])
       val message = RepeatedMessage(1 :: 2 :: 3 :: 4 :: Nil)

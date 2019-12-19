@@ -30,10 +30,10 @@ libraryDependencies += "com.47deg" %% "pbdirect" % "0.3.1"
 ## Dependencies
 
 PBDirect depends on:
- - [protobuf-java](https://developers.google.com/protocol-buffers/docs/javatutorial) the Protobuf java library (maintained by Google) 
+ - [protobuf-java](https://developers.google.com/protocol-buffers/docs/javatutorial) the Protobuf java library (maintained by Google)
  - [shapeless](https://github.com/milessabin/shapeless) for the generation of type-class instances
  - [cats](https://github.com/typelevel/cats) to deal with optional and repeated fields
- 
+
 ## Usage
 
 In order to use PBDirect you need to import the following:
@@ -66,7 +66,26 @@ message MyMessage {
 }
 ```
 
-Note that the `@pbIndex` annotation is mandatory on all fields of a message.
+Note that the `@pbIndex` annotation is optional. If it is not present, the field's position in the case class is used
+as its index. For example, an unannotated case class like:
+
+```scala
+case class MyMessage(
+  id: Option[Int],
+  text: Option[String],
+  numbers: List[Int]
+)
+```
+
+is equivalent to the following protobuf definition:
+
+```protobuf
+message MyMessage {
+   optional int32  id      = 1;
+   optional string text    = 2;
+   repeated int32  numbers = 3;
+}
+```
 
 ### Serialization
 
