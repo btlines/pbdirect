@@ -1,4 +1,4 @@
-import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport.{headerLicense, HeaderLicense}
+import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport.{headerLicense, headerCreate, HeaderLicense}
 import sbt.Keys._
 import sbt._
 import sbtorgpolicies.OrgPoliciesPlugin
@@ -56,6 +56,8 @@ object ProjectPlugin extends AutoPlugin {
       orgLicenseSetting := MITLicense,
       headerLicense := Some(
         HeaderLicense.MIT(replaceableYear(startYear.value), "Beyond the lines")),
+      // disable license headers on source files because it's too complicated, owing to us forking the project
+      excludeFilter.in(unmanagedSources.in(headerCreate)) := HiddenFileFilter || "*.*",
       startYear := Some(2019),
       scalaVersion := V.scala212,
       crossScalaVersions := Seq(scalaVersion.value, V.scala211),
