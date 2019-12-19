@@ -30,21 +30,17 @@ libraryDependencies += "com.47deg" %% "pbdirect" % "0.3.1"
 ## Dependencies
 
 PBDirect depends on:
- - [protobuf-java](https://developers.google.com/protocol-buffers/docs/javatutorial) the Protobuf java library (maintained by Google) 
+ - [protobuf-java](https://developers.google.com/protocol-buffers/docs/javatutorial) the Protobuf java library (maintained by Google)
  - [shapeless](https://github.com/milessabin/shapeless) for the generation of type-class instances
  - [cats](https://github.com/typelevel/cats) to deal with optional and repeated fields
- 
+
 ## Usage
 
 In order to use PBDirect you need to import the following:
 
 ```scala
-import cats.instances.list._
-import cats.instances.option._
 import pbdirect._
 ```
-
-*Note*: It's not recommended to use `import cats.instances.all._` as it may cause issues with implicit resolution.
 
 ## Example
 
@@ -54,8 +50,29 @@ PBDirect serialises case classes into protobuf and there is no need for a .proto
 
 ```scala
 case class MyMessage(
-  id: Option[Int], 
-  text: Option[String], 
+  @pbIndex(1) id: Option[Int],
+  @pbIndex(3) text: Option[String],
+  @pbIndex(5) numbers: List[Int]
+)
+```
+
+is equivalent to the following protobuf definition:
+
+```protobuf
+message MyMessage {
+   optional int32  id      = 1;
+   optional string text    = 3;
+   repeated int32  numbers = 5;
+}
+```
+
+Note that the `@pbIndex` annotation is optional. If it is not present, the field's position in the case class is used
+as its index. For example, an unannotated case class like:
+
+```scala
+case class MyMessage(
+  id: Option[Int],
+  text: Option[String],
   numbers: List[Int]
 )
 ```
@@ -70,8 +87,6 @@ message MyMessage {
 }
 ```
 
-The field numbers correspond to the order of the fields inside the case class.
-
 ### Serialization
 
 You only need to call the `toPB` method on your case class. This method is implicitly added with `import pbdirect._`.
@@ -83,6 +98,7 @@ val message = MyMessage(
   numbers = List(1, 2, 3, 4)
 )
 val bytes = message.toPB
+// bytes: Array(8, 123, 26, 5, 72, 101, 108, 108, 111, 40, 1, 40, 2, 40, 3, 40, 4)
 ```
 
 ### Deserialization
@@ -91,8 +107,9 @@ Deserializing bytes into a case class is also straight forward. You only need to
 This method is added implicitly on all `Array[Byte]` by importing `pbdirect._`.
 
 ```scala
-val bytes: Array[Byte] = Array[Byte](8, 123, 18, 5, 72, 101, 108, 108, 111, 24, 1, 32, 2, 40, 3, 48, 4)
+val bytes: Array[Byte] = Array[Byte](8, 123, 26, 5, 72, 101, 108, 108, 111, 40, 1, 40, 2, 40, 3, 40, 4)
 val message = bytes.pbTo[MyMessage]
+// message: MyMessage(Some(123),Some(hello),List(1, 2, 3, 4))
 ```
 
 ## Extension
@@ -124,8 +141,8 @@ And for a writer you simply contramap over it:
 import java.time.Instant
 import cats.syntax.contravariant._
 
-implicit val instantWriter: PBWriter[Instant] =
-  PBWriter[Long].contramap(_.toEpochMilli)
+implicit val instantWriter: PBFieldWriter[Instant] =
+  PBFieldWriter[Long].contramap(_.toEpochMilli)
   )
 ```
 
