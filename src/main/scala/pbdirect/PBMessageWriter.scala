@@ -10,22 +10,11 @@ trait PBMessageWriter[A] {
 }
 
 trait PBMessageWriterImplicits {
+
   def instance[A](f: (A, CodedOutputStream) => Unit): PBMessageWriter[A] =
     new PBMessageWriter[A] {
       override def writeTo(value: A, out: CodedOutputStream): Unit =
         f(value, out)
-    }
-  implicit val hnilWriter: PBMessageWriter[HNil] = instance { (_: HNil, _: CodedOutputStream) =>
-    ()
-  }
-  implicit def consWriter[H, T <: HList](
-      implicit head: PBFieldWriter[H],
-      tail: Lazy[PBMessageWriter[T]]): PBMessageWriter[(FieldIndex, H) :: T] =
-    instance { (value: (FieldIndex, H) :: T, out: CodedOutputStream) =>
-      val headIndex = value.head._1.values.head
-      val headValue = value.head._2
-      head.writeTo(headIndex, headValue, out)
-      tail.value.writeTo(value.tail, out)
     }
 
   object zipWithFieldIndex extends Poly2 {
@@ -44,7 +33,7 @@ trait PBMessageWriterImplicits {
       annotations: Annotations.Aux[pbIndex, A, Anns],
       zwi: ZipWithIndex.Aux[R, ZWI],
       zw: ZipWith.Aux[Anns, ZWI, zipWithFieldIndex.type, ZWFI],
-      writer: Lazy[PBMessageWriter[ZWFI]]): PBMessageWriter[A] =
+      writer: Lazy[PBProductWriter[ZWFI]]): PBMessageWriter[A] =
     instance { (value: A, out: CodedOutputStream) =>
       val fields            = gen.to(value)
       val fieldsWithIndices = fields.zipWithIndex

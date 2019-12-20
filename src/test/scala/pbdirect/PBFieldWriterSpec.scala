@@ -111,14 +111,5 @@ class PBFieldWriterSpec extends AnyWordSpecLike with Matchers {
         37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114, 111, 115, 101, 114, 118,
         105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40, -71, 96)
     }
-    "derive new instance using contramap" in {
-      import java.time.Instant
-      import cats.syntax.contravariant._
-      case class Message(@pbIndex(1) instant: Instant)
-      implicit val instantWriter: PBFieldWriter[Instant] =
-        PBFieldWriter[Long].contramap(_.toEpochMilli)
-      val instant = Instant.ofEpochMilli(1499411227777L)
-      write(instant) shouldBe Array[Byte](8, -127, -55, -2, -34, -47, 43)
-    }
   }
 }
