@@ -109,6 +109,54 @@ class PBFieldReaderSpec extends AnyWordSpecLike with Matchers {
       PBFieldReader[List[Metric]]
         .read(1, bytes) shouldBe Metric("metric", "microservices", "node", 12F, 12345) :: Nil
     }
+    "use the default value when reading a missing Boolean from Protobuf" in {
+      PBFieldReader[Boolean].read(1, Array.empty[Byte]) shouldBe false
+    }
+    "use the default value when reading a missing Byte from Protobuf" in {
+      PBFieldReader[Byte].read(1, Array.empty[Byte]) shouldBe 0.toByte
+    }
+    "use the default value when reading a missing Short from Protobuf" in {
+      PBFieldReader[Short].read(1, Array.empty[Byte]) shouldBe 0.toShort
+    }
+    "use the default value when reading a missing Int from Protobuf" in {
+      PBFieldReader[Int].read(1, Array.empty[Byte]) shouldBe 0
+    }
+    "use the default value when reading a missing Long from Protobuf" in {
+      PBFieldReader[Long].read(1, Array.empty[Byte]) shouldBe 0L
+    }
+    "use the default value when reading a missing Float from Protobuf" in {
+      PBFieldReader[Float].read(1, Array.empty[Byte]) shouldBe 0.0F
+    }
+    "use the default value when reading a missing Double from Protobuf" in {
+      PBFieldReader[Double].read(1, Array.empty[Byte]) shouldBe 0.0
+    }
+    "use the default value when reading a missing String from Protobuf" in {
+      PBFieldReader[String].read(1, Array.empty[Byte]) shouldBe ""
+    }
+    "use the default value when reading a missing byte array from Protobuf" in {
+      PBFieldReader[Array[Byte]].read(1, Array.empty[Byte]) shouldBe Array.empty[Byte]
+    }
+    "use the default value when reading a missing enumeration from Protobuf" in {
+      case object Grade extends Enumeration {
+        val GradeA, GradeB = Value
+      }
+      PBFieldReader[Grade.Value].read(1, Array.empty[Byte]) shouldBe Grade.GradeA
+    }
+    "use the default value when reading a missing enum from Protobuf" in {
+      sealed trait Grade extends Pos
+      case object GradeA extends Grade with Pos._0
+      case object GradeB extends Grade with Pos._1
+      PBFieldReader[Grade].read(1, Array.empty[Byte]) shouldBe GradeA
+    }
+    "use the default value when reading a missing enumeratum IntEnumEntry from Protobuf" in {
+      PBFieldReader[Quality].read(1, Array.empty[Byte]) shouldBe Quality.Good
+    }
+    "use the default value when reading a missing embedded message from Protobuf" in {
+      case class FurtherEmbeddedMessage(value: Int)
+      case class EmbeddedMessage(a: Int, b: String, c: FurtherEmbeddedMessage)
+      PBFieldReader[EmbeddedMessage]
+        .read(1, Array.empty[Byte]) shouldBe EmbeddedMessage(0, "", FurtherEmbeddedMessage(0))
+    }
   }
 }
 

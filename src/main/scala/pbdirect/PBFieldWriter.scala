@@ -1,36 +1,25 @@
 package pbdirect
 
-import cats.Functor
 import com.google.protobuf.CodedOutputStream
 
 trait PBFieldWriter[A] {
   def writeTo(index: Int, value: A, out: CodedOutputStream): Unit
 }
 
-trait LowPriorityPBFieldWriterImplicits {
+trait PBFieldWriterImplicits {
+
   def instance[A](f: (Int, A, CodedOutputStream) => Unit): PBFieldWriter[A] =
     new PBFieldWriter[A] {
       override def writeTo(index: Int, value: A, out: CodedOutputStream): Unit =
         f(index, value, out)
     }
 
-  implicit def functorWriter[F[_], A](
-      implicit functor: Functor[F],
-      writer: PBFieldWriter[A]): PBFieldWriter[F[A]] =
-    instance { (index: Int, value: F[A], out: CodedOutputStream) =>
-      functor.map(value) { v =>
-        writer.writeTo(index, v, out)
-      }
-      ()
-    }
-}
-
-trait PBFieldWriterImplicits extends LowPriorityPBFieldWriterImplicits {
-
   implicit def scalarWriter[A](implicit writer: PBScalarValueWriter[A]): PBFieldWriter[A] =
     instance { (index: Int, value: A, out: CodedOutputStream) =>
-      out.writeTag(index, writer.wireType)
-      writer.writeWithoutTag(value, out)
+      if (!writer.isDefault(value)) {
+        out.writeTag(index, writer.wireType)
+        writer.writeWithoutTag(value, out)
+      }
     }
 
   implicit def optionWriter[A](implicit writer: PBFieldWriter[A]): PBFieldWriter[Option[A]] =
@@ -38,9 +27,14 @@ trait PBFieldWriterImplicits extends LowPriorityPBFieldWriterImplicits {
       option.foreach(v => writer.writeTo(index, v, out))
     }
 
-  implicit def listWriter[A](implicit writer: PBFieldWriter[A]): PBFieldWriter[List[A]] =
+  implicit def listWriter[A](implicit writer: PBScalarValueWriter[A]): PBFieldWriter[List[A]] =
     instance { (index: Int, list: List[A], out: CodedOutputStream) =>
-      list.foreach(v => writer.writeTo(index, v, out))
+      // TODO when we support writing packed repeated fields,
+      // we need to check if the list is empty and skip the field completely
+      list.foreach { value =>
+        out.writeTag(index, writer.wireType)
+        writer.writeWithoutTag(value, out)
+      }
     }
 
   implicit def mapWriter[K, V](

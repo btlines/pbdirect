@@ -39,7 +39,7 @@ trait PBFieldReaderImplicits {
           case tag                        => input.skipField(tag)
         }
       }
-      as.head
+      as.headOption.getOrElse(reader.defaultValue)
     }
 
   implicit def optionalFieldReader[A](
