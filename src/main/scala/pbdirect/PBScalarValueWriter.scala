@@ -23,6 +23,14 @@ trait PBScalarValueWriter[A] {
   def wireType: Int
 
   /**
+   * Whether repeated fields of this type can be packed.
+   * Primitive repeated fields (ints, floats, bools and enums)
+   * can be packed, and should be, unless overriden using a @pbUnpacked annotation.
+   */
+  def canBePacked: Boolean =
+    Set(WIRETYPE_VARINT, WIRETYPE_FIXED32, WIRETYPE_FIXED64) contains wireType
+
+  /**
    * Whether the given value would be encoded as the default value
    * for its corresponding protobuf scalar type.
    *

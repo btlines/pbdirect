@@ -50,7 +50,8 @@ object RoundTripSpec {
   case class MessageOne(
       @pbIndex(1) optionalEmpty: Option[EmptyMessage],
       @pbIndex(2) boolean: Boolean,
-      @pbIndex(3) repeatedFloat: List[Float]
+      @pbIndex(3) repeatedFloat: List[Float],
+      @pbIndex(4) @pbUnpacked repeatedUnpackedFloat: List[Float]
   )
 
   case class MessageTwo(

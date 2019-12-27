@@ -4,13 +4,15 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import java.io.ByteArrayOutputStream
 import com.google.protobuf.CodedOutputStream
+import pbdirect.PBFieldWriter.Flags
 
 class PBFieldWriterSpec extends AnyWordSpecLike with Matchers {
 
-  def write[A](value: A)(implicit writer: PBFieldWriter[A]): Array[Byte] = {
+  def write[A](value: A, flags: Flags = Flags(skipDefaultValue = true, unpacked = false))(
+      implicit writer: PBFieldWriter[A]): Array[Byte] = {
     val buffer = new ByteArrayOutputStream()
     val out    = CodedOutputStream.newInstance(buffer)
-    writer.writeTo(1, value, out, skipDefaultValue = true)
+    writer.writeTo(1, value, out, flags)
     out.flush()
     buffer.toByteArray()
   }
@@ -76,14 +78,22 @@ class PBFieldWriterSpec extends AnyWordSpecLike with Matchers {
     "write an empty Option[Int] to Protobuf" in {
       write(None: Option[Int]) shouldBe Array[Byte]()
     }
-    "write a List[Int] to Protobuf as an unpacked repeated field" in {
-      write(1 :: 2 :: 3 :: 4 :: Nil) shouldBe Array[Byte](8, 1, 8, 2, 8, 3, 8, 4)
+    "write a List[Int] to Protobuf as a packed repeated field" in {
+      write(1 :: 2 :: 3 :: 4 :: Nil) shouldBe Array[Byte](10, 4, 1, 2, 3, 4)
     }
-    "write an empty List[Int] to Protobuf as an unpacked repeated field" in {
+    "write an empty List[Int] to Protobuf as a packed repeated field" in {
       write(Nil: List[Int]) shouldBe Array[Byte]()
     }
+    "write a List[Int] to Protobuf as an unpacked repeated field" in {
+      val flags = Flags(skipDefaultValue = true, unpacked = true)
+      write(1 :: 2 :: 3 :: 4 :: Nil, flags) shouldBe Array[Byte](8, 1, 8, 2, 8, 3, 8, 4)
+    }
+    "write an empty List[Int] to Protobuf as an unpacked repeated field" in {
+      val flags = Flags(skipDefaultValue = true, unpacked = true)
+      write(Nil: List[Int], flags) shouldBe Array[Byte]()
+    }
     "write a Seq to Protobuf" in {
-      write(Seq(1, 2, 3, 4)) shouldBe Array[Byte](8, 1, 8, 2, 8, 3, 8, 4)
+      write(Seq(1, 2, 3, 4)) shouldBe Array[Byte](10, 4, 1, 2, 3, 4)
     }
     "write a Map to Protobuf" in {
       write(Map(1 -> "one", 2 -> "two")) shouldBe Array[Byte](10, 7, 8, 1, 18, 3, 111, 110, 101, 10,
@@ -122,11 +132,8 @@ class PBFieldWriterSpec extends AnyWordSpecLike with Matchers {
     "skip a String field with the default value" in {
       write("") shouldBe Array[Byte]()
     }
-    "skip an empty repeated field" in {
-      write(List[Int]()) shouldBe Array[Byte]()
-    }
     "not skip default values in a repeated field" in {
-      write(List[Int](1, 0, 2)) shouldBe Array[Byte](8, 1, 8, 0, 8, 2)
+      write(List[Int](1, 0, 2)) shouldBe Array[Byte](10, 3, 1, 0, 2)
     }
     "not skip default keys or values in a map field" in {
       write(Map[Int, String](0 -> "zero", 1 -> "one", 2 -> "")) shouldBe

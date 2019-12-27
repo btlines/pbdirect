@@ -6,6 +6,7 @@ import shapeless._
 import enumeratum.values.{IntEnum, IntEnumEntry}
 
 trait PBScalarValueReader[A] {
+
   /**
    * The default value to use as a fallback if the field is missing from the message.
    */
