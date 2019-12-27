@@ -10,7 +10,7 @@ class PBFieldWriterSpec extends AnyWordSpecLike with Matchers {
   def write[A](value: A)(implicit writer: PBFieldWriter[A]): Array[Byte] = {
     val buffer = new ByteArrayOutputStream()
     val out    = CodedOutputStream.newInstance(buffer)
-    writer.writeTo(1, value, out)
+    writer.writeTo(1, value, out, skipDefaultValue = true)
     out.flush()
     buffer.toByteArray()
   }

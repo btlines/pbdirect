@@ -11,7 +11,7 @@ class PBScalarValueWriterSpec extends AnyWordSpecLike with Matchers {
     val fieldWriter = implicitly[PBFieldWriter[A]]
     val buffer      = new ByteArrayOutputStream()
     val out         = CodedOutputStream.newInstance(buffer)
-    fieldWriter.writeTo(1, value, out)
+    fieldWriter.writeTo(1, value, out, skipDefaultValue = true)
     out.flush()
     buffer.toByteArray()
   }

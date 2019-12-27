@@ -24,7 +24,19 @@ trait PBProductWriterImplicits {
     instance { (indexedValues: (FieldIndex, H) :: T, out: CodedOutputStream) =>
       val headIndex = indexedValues.head._1.values.head
       val headValue = indexedValues.head._2
-      head.writeTo(headIndex, headValue, out)
+      head.writeTo(headIndex, headValue, out, skipDefaultValue = true)
+      tail.value.writeTo(indexedValues.tail, out)
+    }
+
+  implicit def consOneofWriter[H <: Coproduct, T <: HList](
+      implicit head: PBOneofFieldWriter[H],
+      tail: Lazy[PBProductWriter[T]]): PBProductWriter[(FieldIndex, Option[H]) :: T] =
+    instance { (indexedValues: (FieldIndex, Option[H]) :: T, out: CodedOutputStream) =>
+      indexedValues.head match {
+        case (headFieldIndex, Some(headValue)) =>
+          head.writeTo(headFieldIndex.values, headValue, out)
+        case _ => // skip writing the field
+      }
       tail.value.writeTo(indexedValues.tail, out)
     }
 

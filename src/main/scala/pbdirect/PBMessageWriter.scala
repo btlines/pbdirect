@@ -41,25 +41,6 @@ trait PBMessageWriterImplicits {
       writer.value.writeTo(indexedFields, out)
     }
 
-  implicit val cnilWriter: PBMessageWriter[CNil] = instance { (_: CNil, _: CodedOutputStream) =>
-    throw new Exception("Can't write CNil")
-  }
-  implicit def cconsWriter[H, T <: Coproduct](
-      implicit head: PBMessageWriter[H],
-      tail: PBMessageWriter[T]): PBMessageWriter[H :+: T] =
-    instance { (value: H :+: T, out: CodedOutputStream) =>
-      value match {
-        case Inl(h) => head.writeTo(h, out)
-        case Inr(t) => tail.writeTo(t, out)
-      }
-    }
-  implicit def coprodWriter[A, R <: Coproduct](
-      implicit gen: Generic.Aux[A, R],
-      writer: PBMessageWriter[R]): PBMessageWriter[A] =
-    instance { (value: A, out: CodedOutputStream) =>
-      writer.writeTo(gen.to(value), out)
-    }
-
 }
 
 object PBMessageWriter extends PBMessageWriterImplicits {

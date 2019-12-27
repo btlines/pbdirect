@@ -60,9 +60,9 @@ is equivalent to the following protobuf definition:
 
 ```protobuf
 message MyMessage {
-   optional int32  id      = 1;
-   optional string text    = 3;
-   repeated int32  numbers = 5;
+  int32  id              = 1;
+  string text            = 3;
+  repeated int32 numbers = 5;
 }
 ```
 
@@ -81,9 +81,9 @@ is equivalent to the following protobuf definition:
 
 ```protobuf
 message MyMessage {
-   optional int32  id      = 1;
-   optional string text    = 2;
-   repeated int32  numbers = 3;
+  int32  id              = 1;
+  string text            = 2;
+  repeated int32 numbers = 3;
 }
 ```
 
@@ -125,14 +125,14 @@ implicit val instantFormat: PBFormat[Instant] =
   PBFormat[Long].imap(Instant.ofEpochMilli)(_.toEpochMilli)
 ```
 
-If you only need a reader you can map over an existing `PBReader`
+If you only need a reader you can map over an existing `PBScalarValueReader`
 
 ```scala
 import java.time.Instant
 import cats.syntax.functor._
 
-implicit val instantReader: PBReader[Instant] =
-  PBReader[Long].map(Instant.ofEpochMilli)
+implicit val instantReader: PBScalarValueReader[Instant] =
+  PBScalarValueReader[Long].map(Instant.ofEpochMilli)
 ```
 
 And for a writer you simply contramap over it:
@@ -141,10 +141,73 @@ And for a writer you simply contramap over it:
 import java.time.Instant
 import cats.syntax.contravariant._
 
-implicit val instantWriter: PBFieldWriter[Instant] =
-  PBFieldWriter[Long].contramap(_.toEpochMilli)
+implicit val instantWriter: PBScalarValueWriter[Instant] =
+  PBScalarValueWriter[Long].contramap(_.toEpochMilli)
   )
 ```
+
+## Oneof fields
+
+pbdirect supports protobuf [`oneof` fields](https://developers.google.com/protocol-buffers/docs/proto3#oneof) encoded as [Shapeless](https://github.com/milessabin/shapeless) Coproducts.
+
+For example:
+
+```scala
+case class MyMessage(
+  @pbIndex(1) number: Int,
+  @pbIndex(2,3,4) coproduct: Option[Int :+: String :+: Boolean :+: CNil]
+)
+```
+
+is equivalent to the following protobuf definition:
+
+```protobuf
+message MyMessage {
+  int32 number = 1;
+  oneof coproduct {
+    int32 a  = 2;
+    string b = 3;
+    bool c   = 4;
+  }
+}
+```
+
+There are a couple of restrictions:
+
+* `oneof` fields must have a `@pbIndex` annotation containing the indices of each of the sub-fields
+* The type of `oneof` fields must be a Coproduct wrapped in `Option[_]`. This is so that pbdirect can set the value to `None` when the field is missing when reading a message from protobuf.
+
+## Default values and missing fields
+
+When reading a protobuf message, pbdirect needs to handle missing fields by falling back to some default value. How it does this depends on the type of field.
+
+The following table gives some examples of how pbdirect decodes missing fields:
+
+| Scala type | Value given to missing field |
+| --- | --- |
+| `Int`/`Short`/`Byte`/`Long` | `0` |
+| `Double`/`Float` | `0.0` |
+| `String` | `""` |
+| `Array[Byte]` | empty array |
+| `List[_]` | empty list |
+| `Map[_, _]` | empty map |
+| Scala `Enumeration` or [enumeratum](https://github.com/lloydmeta/enumeratum) `IntEnum` | the entry with value 0 |
+| `Option[_]` | `None` |
+| `MyMessage` | an instance of `MyMessage` with all its fields set to their default values |
+| `Int :+: String :+: CNil` | (not supported) |
+| `Option[Int :+: String :+: CNil]` | `None` |
+
+If you have defined your own `PBScalarValueReader` by mapping over one of the
+built-in readers, you will get whatever value is produced by the default value
+of the underlying type.
+
+For example, if your message looks like:
+
+```scala
+case class MyMessage(instant: Instant)
+```
+
+and you use the `instantReader` defined earlier, reading a message with the `instant` field missing would result in `1970-01-01T00:00:00Z`.
 
 [comment]: # (Start Copyright)
 # Copyright

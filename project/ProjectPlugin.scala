@@ -94,6 +94,7 @@ object ProjectPlugin extends AutoPlugin {
         ScalafmtFileType,
         TravisFileType(crossScalaVersions.value, orgScriptCICommandKey, orgAfterCISuccessCommandKey)
         // format: ON
-      )
+      ),
+      Compile / console / scalacOptions -= "-Xlint"
     )
 }

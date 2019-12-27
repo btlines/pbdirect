@@ -4,8 +4,6 @@ import shapeless._
 import shapeless.ops.hlist._
 import shapeless.ops.nat._
 
-import scala.util.Try
-
 trait PBMessageReader[A] {
   def read(bytes: Array[Byte]): A
 }
@@ -35,28 +33,6 @@ trait PBMessageReaderImplicits {
       reader: Lazy[PBProductReader[R, I]]): PBMessageReader[A] = instance { (bytes: Array[Byte]) =>
     val fieldIndices = annotations.apply.zipWithIndex.map(collectFieldIndices)
     gen.from(reader.value.read(fieldIndices, bytes))
-  }
-
-  implicit val cnilReader: PBMessageReader[CNil] = instance { (bytes: Array[Byte]) =>
-    throw new UnsupportedOperationException("Can't read CNil")
-  }
-
-  implicit def cconsReader[H, T <: Coproduct](
-      implicit
-      head: PBMessageReader[H],
-      tail: Lazy[PBMessageReader[T]]): PBMessageReader[H :+: T] = instance { (bytes: Array[Byte]) =>
-    Try {
-      Inl(head.read(bytes))
-    } getOrElse {
-      Inr(tail.value.read(bytes))
-    }
-  }
-
-  implicit def coprodReader[A, R <: Coproduct](
-      implicit
-      gen: Generic.Aux[A, R],
-      repr: Lazy[PBMessageReader[R]]): PBMessageReader[A] = instance { (bytes: Array[Byte]) =>
-    gen.from(repr.value.read(bytes))
   }
 
 }

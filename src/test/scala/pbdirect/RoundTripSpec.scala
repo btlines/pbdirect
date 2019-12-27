@@ -28,7 +28,8 @@ class RoundTripSpec extends AnyFlatSpec with Checkers {
 
   "round trip to protobuf and back" should "result in a message equivalent to the original" in check {
     forAllNoShrink { (message: MessageThree) =>
-      val roundtripped = message.toPB.pbTo[MessageThree]
+      val serialized   = message.toPB
+      val roundtripped = serialized.pbTo[MessageThree]
 
       val label = s"""|
         |message before roundtrip = $message
@@ -56,7 +57,8 @@ object RoundTripSpec {
       @pbIndex(5) int: Int,
       @pbIndex(10) string: String,
       @pbIndex(15) emptyMessage: EmptyMessage,
-      @pbIndex(20) nestedMessage: MessageOne
+      @pbIndex(20) nestedMessage: MessageOne,
+      @pbIndex(21, 22, 23) coproduct: Option[Int :+: String :+: MessageOne :+: CNil]
   )
 
   case class MessageThree(
