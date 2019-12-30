@@ -140,7 +140,7 @@ object ProtocComparisonSpec {
         .replaceAllLiterally("\t", "\\t")
         .replaceAllLiterally("\u0000", "\\0")
         .replaceAllLiterally(""""""", """\"""") // esape double quotes
-      s""""$escaped""""
+      s""""$escaped"""" // wrap in double quotes
     }
 
     def stringStringMap(map: Map[String, String]): String = {
@@ -161,7 +161,9 @@ object ProtocComparisonSpec {
           case (key, value) =>
             s"""|intMessageTwoMap: {
                 |  key: ${key}
-                |  value: ${embeddedMessageTwo(value)}
+                |  value: {
+                |${indent(indent(messageTwo(value)))}
+                |  }
                 |}""".stripMargin
         }
         .mkString("\n")
