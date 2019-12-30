@@ -73,8 +73,16 @@ class PBFieldReaderSpec extends AnyWordSpecLike with Matchers {
       val bytes = Array[Byte](8, 11)
       PBFieldReader[Option[Int]].read(1, bytes) shouldBe Some(11)
     }
-    "read a repeated field from Protobuf" in {
+    "read an unpacked repeated field from Protobuf" in {
       val bytes = Array[Byte](8, 1, 8, 2, 8, 3, 8, 4)
+      PBFieldReader[List[Int]].read(1, bytes) shouldBe 1 :: 2 :: 3 :: 4 :: Nil
+    }
+    "read a packed repeated field from Protobuf" in {
+      val bytes = Array[Byte](10, 4, 1, 2, 3, 4)
+      PBFieldReader[List[Int]].read(1, bytes) shouldBe 1 :: 2 :: 3 :: 4 :: Nil
+    }
+    "read a packed repeated field split into multiple key-value pairs" in {
+      val bytes = Array[Byte](10, 2, 1, 2, 10, 2, 3, 4)
       PBFieldReader[List[Int]].read(1, bytes) shouldBe 1 :: 2 :: 3 :: 4 :: Nil
     }
     "read a Seq from Protobuf" in {

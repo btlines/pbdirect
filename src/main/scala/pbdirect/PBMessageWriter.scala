@@ -28,17 +28,38 @@ trait PBMessageWriterImplicits {
     }
   }
 
-  implicit def prodWriter[A, R <: HList, Anns <: HList, ZWI <: HList, ZWFI <: HList](
+  object zipWithModifiers extends Poly2 {
+    implicit def annotatedCase[A] = at[(FieldIndex, A), Some[pbUnpacked]] {
+      case ((fieldIndex, value), Some(annotation)) =>
+        (fieldIndex, value, FieldModifiers(unpacked = true))
+    }
+    implicit def unannotatedCase[A] = at[(FieldIndex, A), None.type] {
+      case ((fieldIndex, value), None) =>
+        (fieldIndex, value, FieldModifiers(unpacked = false))
+    }
+  }
+
+  implicit def prodWriter[
+      A,
+      R <: HList,
+      IA <: HList,
+      UA <: HList,
+      ZWI <: HList,
+      ZWFI <: HList,
+      ZWM <: HList](
       implicit gen: Generic.Aux[A, R],
-      annotations: Annotations.Aux[pbIndex, A, Anns],
+      indexAnns: Annotations.Aux[pbIndex, A, IA],
+      unpackedAnns: Annotations.Aux[pbUnpacked, A, UA],
       zwi: ZipWithIndex.Aux[R, ZWI],
-      zw: ZipWith.Aux[Anns, ZWI, zipWithFieldIndex.type, ZWFI],
-      writer: Lazy[PBProductWriter[ZWFI]]): PBMessageWriter[A] =
+      zwfi: ZipWith.Aux[IA, ZWI, zipWithFieldIndex.type, ZWFI],
+      zwm: ZipWith.Aux[ZWFI, UA, zipWithModifiers.type, ZWM],
+      writer: Lazy[PBProductWriter[ZWM]]): PBMessageWriter[A] =
     instance { (value: A, out: CodedOutputStream) =>
-      val fields            = gen.to(value)
-      val fieldsWithIndices = fields.zipWithIndex
-      val indexedFields     = annotations.apply.zipWith(fieldsWithIndices)(zipWithFieldIndex)
-      writer.value.writeTo(indexedFields, out)
+      val fields                     = gen.to(value)
+      val fieldsWithIndices          = fields.zipWithIndex
+      val indexedFields              = indexAnns.apply.zipWith(fieldsWithIndices)(zipWithFieldIndex)
+      val indexedFieldsWithModifiers = indexedFields.zipWith(unpackedAnns.apply)(zipWithModifiers)
+      writer.value.writeTo(indexedFieldsWithModifiers, out)
     }
 
 }

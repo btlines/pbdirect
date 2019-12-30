@@ -25,6 +25,7 @@ object PBFormat extends PBFormatImplicits {
       override def wireType: Int                    = writer.wireType
       override def isDefault(value: A): Boolean     = writer.isDefault(value)
       override def defaultValue: A                  = reader.defaultValue
+      override def canBePacked: Boolean             = reader.canBePacked
       override def writeWithoutTag(value: A, out: CodedOutputStream): Unit =
         writer.writeWithoutTag(value, out)
     }

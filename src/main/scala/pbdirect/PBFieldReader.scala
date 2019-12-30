@@ -1,6 +1,7 @@
 package pbdirect
 
 import com.google.protobuf.CodedInputStream
+import com.google.protobuf.WireFormat.{getTagFieldNumber, getTagWireType, WIRETYPE_LENGTH_DELIMITED}
 
 trait PBFieldReader[A] {
   def read(index: Int, bytes: Array[Byte]): A
@@ -19,9 +20,17 @@ trait PBFieldReaderImplicits {
       var as: List[A] = Nil
       while (!done) {
         input.readTag() match {
-          case 0                          => done = true
-          case tag if (tag >> 3) == index => as ::= reader.read(input)
-          case tag                        => input.skipField(tag)
+          case 0 => done = true
+          case tag
+              if getTagFieldNumber(tag) == index && getTagWireType(tag) == WIRETYPE_LENGTH_DELIMITED && reader.canBePacked =>
+            // read a packed repeated field
+            val packedBytes = input.readByteArray()
+            val packedInput = CodedInputStream.newInstance(packedBytes)
+            while (!packedInput.isAtEnd()) {
+              as ::= reader.read(packedInput)
+            }
+          case tag if getTagFieldNumber(tag) == index => as ::= reader.read(input)
+          case tag                                    => input.skipField(tag)
         }
       }
       as.reverse
@@ -34,9 +43,9 @@ trait PBFieldReaderImplicits {
       var as: List[A] = Nil
       while (!done) {
         input.readTag() match {
-          case 0                          => done = true
-          case tag if (tag >> 3) == index => as ::= reader.read(input)
-          case tag                        => input.skipField(tag)
+          case 0                                      => done = true
+          case tag if getTagFieldNumber(tag) == index => as ::= reader.read(input)
+          case tag                                    => input.skipField(tag)
         }
       }
       as.headOption.getOrElse(reader.defaultValue)

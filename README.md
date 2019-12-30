@@ -209,6 +209,19 @@ case class MyMessage(instant: Instant)
 
 and you use the `instantReader` defined earlier, reading a message with the `instant` field missing would result in `1970-01-01T00:00:00Z`.
 
+## Packed repeated fields
+
+Primitive repeated fields (ints, floats, doubles, enums and booleans) are
+encoded using the protobuf packed encoding by default.
+
+This behaviour can be overriden using the `@pbUnpacked` annotation:
+
+```scala
+case class UnpackedMessage(
+  @pbUnpacked() ints: List[Int]
+)
+```
+
 [comment]: # (Start Copyright)
 # Copyright
 
