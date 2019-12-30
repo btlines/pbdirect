@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+message MessageOne {
+  double dbl = 1;
+  bool boolean = 2;
+}
+
+message MessageTwo {
+  int64 long = 1;
+  MessageOne messageOne = 2;
+  MessageOne messageOneOption = 3;
+  oneof coproduct {
+    MessageOne a = 4;
+    MessageTwo b = 5; // recursion!
+    int32 c = 6;
+  }
+}
+
+message MessageThree {
+  int32 int = 2;
+  repeated int32 packedInts = 3;
+  repeated int32 unpackedInts = 4 [packed=false];
+  int32 intOption = 5;
+  map<string, string> stringStringMap = 6;
+  string _string = 7;
+  bytes _bytes = 8;
+  MessageOne messageOne = 9;
+  MessageOne messageOneOption = 10;
+  MessageTwo messageTwo = 11;
+  map<int32, MessageTwo> intMessageTwoMap = 12;
+}
