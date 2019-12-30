@@ -27,6 +27,7 @@ object ProjectPlugin extends AutoPlugin {
       val scalaTest: String           = "3.1.0"
       val scalatestScalacheck: String = "3.1.0.1"
       val scalacheckShapeless: String = "1.2.3"
+      val protocJar: String           = "3.11.1"
     }
   }
 
@@ -67,7 +68,8 @@ object ProjectPlugin extends AutoPlugin {
         "com.beachape"               %% "enumeratum"                % V.enumeratum,
         "org.scalatest"              %% "scalatest"                 % V.scalaTest % Test,
         "org.scalatestplus"          %% "scalacheck-1-14"           % V.scalatestScalacheck % Test,
-        "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % V.scalacheckShapeless % Test
+        "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % V.scalacheckShapeless % Test,
+        "com.github.os72"            % "protoc-jar"                 % V.protocJar % Test
       ),
       orgScriptTaskListSetting := List(
         (clean in Global).asRunnableItemFull,

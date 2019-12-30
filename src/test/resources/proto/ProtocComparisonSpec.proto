@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+message MyMessage {
+  int32 int = 2;
+  repeated int32 packedInts = 3;
+  repeated int32 unpackedInts = 4 [packed=false];
+}
