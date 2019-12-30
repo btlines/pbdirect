@@ -4,4 +4,8 @@ message MyMessage {
   int32 int = 2;
   repeated int32 packedInts = 3;
   repeated int32 unpackedInts = 4 [packed=false];
+  int32 intOption = 5;
+  map<string, string> stringStringMap = 6;
+  string _string = 7;
+  bytes _bytes = 8;
 }
