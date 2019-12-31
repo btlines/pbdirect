@@ -8,6 +8,7 @@ import com.github.os72.protocjar._
 import scala.sys.process._
 import java.io._
 import shapeless._
+import org.scalacheck.Prop
 
 class ProtocComparisonSpec extends AnyFlatSpec with Checkers {
   import ProtocComparisonSpec._
@@ -28,8 +29,8 @@ class ProtocComparisonSpec extends AnyFlatSpec with Checkers {
       val textFormattedMessage = TextFormatEncoding.messageThree(message)
       val in                   = new ByteArrayInputStream(textFormattedMessage.getBytes)
       val out                  = new ByteArrayOutputStream()
-      protocCommand.#<(in).#>(out).!
-      val protocOutputBytes = out.toByteArray.toList
+      val protocExitCode       = protocCommand.#<(in).#>(out).!
+      val protocOutputBytes    = out.toByteArray.toList
 
       val label =
         s"""|_bytes = ${message._bytes.toList}
@@ -43,7 +44,10 @@ class ProtocComparisonSpec extends AnyFlatSpec with Checkers {
             |binary output of protoc =
             |$protocOutputBytes""".stripMargin
 
-      label |: pbdirectOutputBytes == protocOutputBytes
+      label |: Prop.all(
+        s"protoc exit code = $protocExitCode" |: protocExitCode == 0,
+        "bytes should match" |: pbdirectOutputBytes == protocOutputBytes
+      )
     }
   }
 }
