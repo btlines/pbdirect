@@ -25,11 +25,7 @@ class ProtocComparisonSpec extends AnyFlatSpec with Checkers {
     s"${protoc.getAbsolutePath} --proto_path=${workingDir.getAbsolutePath} --encode=MessageThree $protoFile"
 
   "pbdirect" should "write the same bytes as protoc does" in check {
-    var counter = 0
     forAllNoShrink { (message: MessageThree) =>
-      counter += 1
-      println(s"ProtocComparisonSpec: checking case $counter")
-
       val pbdirectOutputBytes = message.toPB.toList
 
       val textFormattedMessage = TextFormatEncoding.messageThree(message)
