@@ -30,16 +30,7 @@ class ProtocComparisonSpec extends AnyFlatSpec with Checkers {
       val in                   = new ByteArrayInputStream(textFormattedMessage.getBytes)
       val out                  = new ByteArrayOutputStream()
       val protocExitCode       = protocCommand.#<(in).#>(out).!
-
-      // hack to see if the test flakiness is caused by some kind of buffering
-      var retriesLeft = 10
-      while (out.size() == 0 && retriesLeft > 0) {
-        println("Protoc output is still empty. Waiting...")
-        Thread.sleep(500L)
-        retriesLeft -= 1
-      }
-
-      val protocOutputBytes = out.toByteArray.toList
+      val protocOutputBytes    = awaitProtocOutput(out)
 
       val label =
         s"""|_bytes = ${message._bytes.toList}
@@ -59,6 +50,24 @@ class ProtocComparisonSpec extends AnyFlatSpec with Checkers {
       )
     }
   }
+
+  /*
+   * Workaround for test flakiness on Travis.
+   * Occasionally the output buffer is not written until after the process
+   * has exited. (I think it happens on a separate thread.)
+   * So we wait to give the data a chance to show up.
+   */
+  def awaitProtocOutput(out: ByteArrayOutputStream): List[Byte] = {
+    var retriesLeft = 10
+    while (out.size() == 0 && retriesLeft > 0) {
+      println("Protoc output is still empty. Waiting...")
+      Thread.sleep(500L)
+      retriesLeft -= 1
+    }
+
+    out.toByteArray.toList
+  }
+
 }
 
 object ProtocComparisonSpec {
