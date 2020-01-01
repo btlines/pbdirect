@@ -23,7 +23,7 @@ object ProjectPlugin extends AutoPlugin {
       val scala211: String            = "2.11.12"
       val scala212: String            = "2.12.10"
       val shapeless: String           = "2.3.3"
-      val enumeratum: String          = "1.5.14"
+      val enumeratum: String          = "1.5.15"
       val scalaTest: String           = "3.1.0"
       val scalatestScalacheck: String = "3.1.0.1"
       val scalacheckShapeless: String = "1.2.3"
