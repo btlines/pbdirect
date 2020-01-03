@@ -1,6 +1,7 @@
 package pbdirect
 
 import cats.Functor
+import cats.syntax.functor._
 import com.google.protobuf.CodedInputStream
 import shapeless._
 import enumeratum.values.{IntEnum, IntEnumEntry}
@@ -155,6 +156,14 @@ trait PBScalarValueReaderImplicits extends PBScalarValueReaderImplicits_1 {
       }
     }
   }
+
+  implicit def leftReader[A, B](
+      implicit reader: PBScalarValueReader[A]): PBScalarValueReader[Left[A, B]] =
+    reader.map(Left(_))
+
+  implicit def rightReader[A, B](
+      implicit reader: PBScalarValueReader[B]): PBScalarValueReader[Right[A, B]] =
+    reader.map(Right(_))
 
 }
 

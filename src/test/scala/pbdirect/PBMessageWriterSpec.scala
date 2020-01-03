@@ -121,5 +121,17 @@ class PBMessageWriterSpec extends AnyWordSpecLike with Matchers {
       val message = CoproductMessage(5, Some("".inject[Cop]))
       message.toPB shouldBe Array[Byte](8, 5, 42, 0)
     }
+    case class EitherMessage(
+        @pbIndex(1) a: Int,
+        @pbIndex(3, 5) either: Option[Either[String, Int]]
+    )
+    "write a properly annotated message with an Either field (left)" in {
+      val message = EitherMessage(5, Some(Left("Hello")))
+      message.toPB shouldBe Array[Byte](8, 5, 26, 5, 72, 101, 108, 108, 111)
+    }
+    "write a properly annotated message with an Either field (right)" in {
+      val message = EitherMessage(5, Some(Right(8)))
+      message.toPB shouldBe Array[Byte](8, 5, 40, 8)
+    }
   }
 }
