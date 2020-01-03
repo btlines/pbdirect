@@ -59,7 +59,8 @@ object RoundTripSpec {
       @pbIndex(10) string: String,
       @pbIndex(15) emptyMessage: EmptyMessage,
       @pbIndex(20) nestedMessage: MessageOne,
-      @pbIndex(21, 22, 23) coproduct: Option[Int :+: String :+: MessageOne :+: CNil]
+      @pbIndex(21, 22, 23) coproduct: Option[Int :+: String :+: MessageOne :+: CNil],
+      @pbIndex(24, 25) either: Option[Either[Int, String]]
   )
 
   case class MessageThree(
@@ -157,6 +158,14 @@ trait PBEquivalenceImplicits_1 extends PBEquivalenceImplicits_2 {
     option("bytesOption", Array.empty[Byte])
   implicit val enumOption: PBEquivalence[Option[Status]] =
     option("enumOption", Status.withValue(0))
+
+  implicit def either[A, B](
+      implicit aEquiv: PBEquivalence[A],
+      bEquiv: PBEquivalence[B]): PBEquivalence[Either[A, B]] = instance("either") {
+    case (Left(a1), Left(a2))   => aEquiv.equiv(a1, a2)
+    case (Right(b1), Right(b2)) => bEquiv.equiv(b1, b2)
+    case _                      => false
+  }
 
   object fieldEquivalence extends Poly2 {
     implicit def defaultCase[A](implicit equiv: PBEquivalence[A]): Case.Aux[A, A, Boolean] =

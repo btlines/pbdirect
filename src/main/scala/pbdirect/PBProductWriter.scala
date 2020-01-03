@@ -18,7 +18,7 @@ trait PBProductWriterImplicits {
     ()
   }
 
-  implicit def consWriter[H, T <: HList](
+  implicit def hconsWriter[H, T <: HList](
       implicit head: PBFieldWriter[H],
       tail: Lazy[PBProductWriter[T]]): PBProductWriter[(FieldIndex, H, FieldModifiers) :: T] =
     instance { (indexedValues: (FieldIndex, H, FieldModifiers) :: T, out: CodedOutputStream) =>
@@ -30,7 +30,7 @@ trait PBProductWriterImplicits {
       tail.value.writeTo(indexedValues.tail, out)
     }
 
-  implicit def consOneofWriter[H <: Coproduct, T <: HList](
+  implicit def hconsCoproductOneofWriter[H <: Coproduct, T <: HList](
       implicit head: PBOneofFieldWriter[H],
       tail: Lazy[PBProductWriter[T]]): PBProductWriter[
     (FieldIndex, Option[H], FieldModifiers) :: T] =
@@ -44,6 +44,20 @@ trait PBProductWriterImplicits {
           case _ => // skip writing the field
         }
         tail.value.writeTo(indexedValues.tail, out)
+    }
+
+  // write an Either[A, B] by treating it as a Coproduct (Left[A, B] :+: Right[A, B] :+: CNil)
+  implicit def hconsEitherOneofWriter[A, B, H <: Coproduct, T <: HList](
+      implicit gen: Generic.Aux[Either[A, B], H],
+      productWriter: PBProductWriter[(FieldIndex, Option[H], FieldModifiers) :: T]
+  ): PBProductWriter[(FieldIndex, Option[Either[A, B]], FieldModifiers) :: T] =
+    instance {
+      (
+          indexedValues: (FieldIndex, Option[Either[A, B]], FieldModifiers) :: T,
+          out: CodedOutputStream) =>
+        val headEitherAsCoproduct: Option[H] = indexedValues.head._2.map(gen.to)
+        val head                             = indexedValues.head.copy(_2 = headEitherAsCoproduct)
+        productWriter.writeTo(head :: indexedValues.tail, out)
     }
 
 }

@@ -5,4 +5,4 @@ package pbdirect
  * It holds a list of indices in order to support 'oneof' fields,
  * which are encoded as shapeless Coproducts and have a different index for each branch.
  */
-private[pbdirect] final case class FieldIndex(values: List[Int])
+final case class FieldIndex(values: List[Int])

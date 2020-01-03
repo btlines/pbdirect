@@ -108,5 +108,17 @@ class PBMessageReaderSpec extends AnyWordSpecLike with Matchers {
       val bytes = Array[Byte](26, 4, 8, 5, 42, 0)
       bytes.pbTo[WrapperMessage] shouldBe WrapperMessage(CoproductMessage(5, Some("".inject[Cop])))
     }
+    case class EitherMessage(
+        @pbIndex(1) a: Int,
+        @pbIndex(3, 5) either: Option[Either[String, Int]]
+    )
+    "read a properly annotated message with an Either field (left)" in {
+      val bytes = Array[Byte](8, 5, 26, 5, 72, 101, 108, 108, 111)
+      bytes.pbTo[EitherMessage] shouldBe EitherMessage(5, Some(Left("Hello")))
+    }
+    "write a properly annotated message with an Either field (right)" in {
+      val bytes = Array[Byte](8, 5, 40, 8)
+      bytes.pbTo[EitherMessage] shouldBe EitherMessage(5, Some(Right(8)))
+    }
   }
 }

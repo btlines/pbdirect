@@ -3,6 +3,7 @@ package pbdirect
 import java.io.ByteArrayOutputStream
 
 import cats.Contravariant
+import cats.syntax.contravariant._
 import com.google.protobuf.CodedOutputStream
 import com.google.protobuf.WireFormat._
 import enumeratum.values.IntEnumEntry
@@ -203,6 +204,14 @@ trait PBScalarValueWriterImplicits extends LowPriorityPBScalarValueWriterImplici
           writer.writeWithoutTag(f(b), out)
       }
   }
+
+  implicit def leftWriter[A, B](
+      implicit writer: PBScalarValueWriter[A]): PBScalarValueWriter[Left[A, B]] =
+    writer.contramap(_.value)
+
+  implicit def rightWriter[A, B](
+      implicit writer: PBScalarValueWriter[B]): PBScalarValueWriter[Right[A, B]] =
+    writer.contramap(_.value)
 
 }
 
