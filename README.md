@@ -172,10 +172,31 @@ message MyMessage {
 }
 ```
 
-There are a couple of restrictions:
+`oneof` fields with exactly two branches can also be encoded using `Either`. For example:
+
+```scala
+case class MyMessage(
+  @pbIndex(1) number: Int,
+  @pbIndex(2,3) either: Option[Either[String, Boolean]]
+)
+```
+
+is equivalent to:
+
+```protobuf
+message MyMessage {
+  int32 number = 1;
+  oneof either {
+    string b = 2;
+    bool c   = 3;
+  }
+}
+```
+
+Support for `oneof` fields comes with a couple of restrictions:
 
 * `oneof` fields must have a `@pbIndex` annotation containing the indices of each of the sub-fields
-* The type of `oneof` fields must be a Coproduct wrapped in `Option[_]`. This is so that pbdirect can set the value to `None` when the field is missing when reading a message from protobuf.
+* The type of `oneof` fields must be a Coproduct (or `Either`) wrapped in `Option[_]`. This is so that pbdirect can set the value to `None` when the field is missing when reading a message from protobuf.
 
 ## Default values and missing fields
 
