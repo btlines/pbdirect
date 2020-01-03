@@ -207,11 +207,11 @@ trait PBScalarValueWriterImplicits extends LowPriorityPBScalarValueWriterImplici
 
   implicit def leftWriter[A, B](
       implicit writer: PBScalarValueWriter[A]): PBScalarValueWriter[Left[A, B]] =
-    writer.contramap(_.value)
+    writer.contramap(_.a)
 
   implicit def rightWriter[A, B](
       implicit writer: PBScalarValueWriter[B]): PBScalarValueWriter[Right[A, B]] =
-    writer.contramap(_.value)
+    writer.contramap(_.b)
 
 }
 
