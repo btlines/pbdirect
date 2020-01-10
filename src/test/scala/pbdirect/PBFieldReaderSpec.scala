@@ -3,6 +3,7 @@ package pbdirect
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import enumeratum.values._
+import shapeless.tag.@@
 
 class PBFieldReaderSpec extends AnyWordSpecLike with Matchers {
 
@@ -23,9 +24,45 @@ class PBFieldReaderSpec extends AnyWordSpecLike with Matchers {
       val bytes = Array[Byte](8, 5)
       PBFieldReader[Int].read(1, bytes) shouldBe 5
     }
+    "read an unsigned Int from Protobuf" in {
+      val bytes = Array[Byte](8, 5)
+      PBFieldReader[Int @@ Unsigned].read(1, bytes) shouldBe 5
+    }
+    "read a signed Int from Protobuf" in {
+      val bytes = Array[Byte](8, 9)
+      PBFieldReader[Int @@ Signed].read(1, bytes) shouldBe -5
+    }
+    "read a fixed-width Int from Protobuf" in {
+      val bytes = Array[Byte](13, 5, 0, 0, 0)
+      PBFieldReader[Int @@ Fixed].read(1, bytes) shouldBe 5
+    }
+    "read a signed fixed-width Int from Protobuf" in {
+      // sfixed32 is encoded exactly the same way as fixed32,
+      // so the bytes are the same as in the test above
+      val bytes = Array[Byte](13, 5, 0, 0, 0)
+      PBFieldReader[Int @@ (Signed with Fixed)].read(1, bytes) shouldBe 5
+    }
     "read a Long from Protobuf" in {
       val bytes = Array[Byte](8, -128, -128, -128, -128, 8)
       PBFieldReader[Long].read(1, bytes) shouldBe Int.MaxValue.toLong + 1
+    }
+    "read an unsigned Long from Protobuf" in {
+      val bytes = Array[Byte](8, -128, -128, -128, -128, 8)
+      PBFieldReader[Long @@ Unsigned].read(1, bytes) shouldBe Int.MaxValue.toLong + 1
+    }
+    "read a signed Long from Protobuf" in {
+      val bytes = Array[Byte](8, -128, -128, -128, -128, 16)
+      PBFieldReader[Long @@ Signed].read(1, bytes) shouldBe Int.MaxValue.toLong + 1
+    }
+    "read a fixed-width Long from Protobuf" in {
+      val bytes = Array[Byte](9, 0, 0, 0, -128, 0, 0, 0, 0)
+      PBFieldReader[Long @@ Fixed].read(1, bytes) shouldBe Int.MaxValue.toLong + 1
+    }
+    "read a signed fixed-width Long from Protobuf" in {
+      // sfixed64 is encoded exactly the same way as fixed64,
+      // so the bytes are the same as in the test above
+      val bytes = Array[Byte](9, 0, 0, 0, -128, 0, 0, 0, 0)
+      PBFieldReader[Long @@ (Signed with Fixed)].read(1, bytes) shouldBe Int.MaxValue.toLong + 1
     }
     "read a Float from Protobuf" in {
       val bytes = Array[Byte](13, -51, -52, 76, 62)
