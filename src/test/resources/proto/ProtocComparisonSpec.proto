@@ -28,4 +28,5 @@ message MessageThree {
   MessageOne messageOneOption = 10;
   MessageTwo messageTwo = 11;
   map<int32, MessageTwo> intMessageTwoMap = 12;
+  map<sint32, fixed64> signedIntFixedLongMap = 13;
 }

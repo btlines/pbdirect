@@ -5,18 +5,31 @@ package pbdirect
 import org.scalatest.flatspec._
 import org.scalatestplus.scalacheck.Checkers
 import org.scalacheck.ScalacheckShapeless._
+import org.scalacheck.{Arbitrary, Gen, Prop}
 import org.scalacheck.Prop._
 import com.github.os72.protocjar._
 import scala.sys.process._
 import java.io._
 import shapeless._
-import org.scalacheck.Prop
+import shapeless.tag.@@
 
 class ProtocComparisonSpec extends AnyFlatSpec with Checkers {
   import ProtocComparisonSpec._
 
   implicit override val generatorDrivenConfig =
     PropertyCheckConfiguration(minSuccessful = 500)
+
+  implicit def signedIntArb(implicit int: Arbitrary[Int]): Arbitrary[Int @@ Signed] =
+    Arbitrary(int.arbitrary.map(tag[Signed](_)))
+
+  /*
+   * The fixed-width types are unsigned.
+   * protoc will reject any attempt to encode a negative number as a fixed-width type
+   * (although protobuf-java will happily encode negative numbers!)
+   * so we restrict to `Gen.posNum`.
+   */
+  implicit val fixedWidthLongArb: Arbitrary[Long @@ Fixed] =
+    Arbitrary(Gen.posNum[Long].map(tag[Fixed](_)))
 
   val protoc: File     = Protoc.extractProtoc(ProtocVersion.PROTOC_VERSION, true)
   val workingDir: File = new File(".")
@@ -97,7 +110,8 @@ object ProtocComparisonSpec {
       @pbIndex(9) messageOne: MessageOne,
       @pbIndex(10) messageOneOption: Option[MessageOne],
       @pbIndex(11) messageTwo: MessageTwo,
-      @pbIndex(12) intMessageTwoMap: Map[Int, MessageTwo]
+      @pbIndex(12) intMessageTwoMap: Map[Int, MessageTwo],
+      @pbIndex(13) signedIntFixedLongMap: Map[Int @@ Signed, Long @@ Fixed]
   )
 
   object TextFormatEncoding {
@@ -193,6 +207,18 @@ object ProtocComparisonSpec {
         .mkString("\n")
     }
 
+    def signedIntFixedLongMap(map: Map[Int @@ Signed, Long @@ Fixed]): String = {
+      map
+        .map {
+          case (key, value) =>
+            s"""|signedIntFixedLongMap: {
+                |  key: ${key}
+                |  value: ${value.toString}
+                |}""".stripMargin
+        }
+        .mkString("\n")
+    }
+
     def messageThree(m: MessageThree): String = {
       s"""|int: ${m.int}
           |packedInts: [${m.packedInts.mkString(", ")}]
@@ -205,6 +231,7 @@ object ProtocComparisonSpec {
           |${option("messageOneOption", m.messageOneOption)(embeddedMessageOne)}
           |messageTwo: ${embeddedMessageTwo(m.messageTwo)}
           |${intMessageTwoMap(m.intMessageTwoMap)}
+          |${signedIntFixedLongMap(m.signedIntFixedLongMap)}
           |""".stripMargin
     }
 

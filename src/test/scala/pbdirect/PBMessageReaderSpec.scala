@@ -4,6 +4,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import shapeless._
 import shapeless.syntax.inject._
+import shapeless.tag.@@
 
 class PBMessageReaderSpec extends AnyWordSpecLike with Matchers {
 
@@ -119,6 +120,11 @@ class PBMessageReaderSpec extends AnyWordSpecLike with Matchers {
     "write a properly annotated message with an Either field (right)" in {
       val bytes = Array[Byte](8, 5, 40, 8)
       bytes.pbTo[EitherMessage] shouldBe EitherMessage(5, Some(Right(8)))
+    }
+    "read a message with a signed int field" in {
+      case class SignedIntMessage(a: Int @@ Signed, b: String)
+      val bytes = Array[Byte](8, 9, 18, 5, 72, 101, 108, 108, 111)
+      bytes.pbTo[SignedIntMessage] shouldBe SignedIntMessage(tag[Signed](-5), "Hello")
     }
   }
 }

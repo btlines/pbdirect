@@ -3,10 +3,12 @@ package pbdirect
 import org.scalatest.flatspec._
 import org.scalatestplus.scalacheck.Checkers
 import org.scalacheck.ScalacheckShapeless._
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop._
 import enumeratum.values.IntEnumEntry
 import enumeratum.values.IntEnum
 import shapeless._
+import shapeless.tag.@@
 import shapeless.ops.hlist._
 
 sealed abstract class Status(val value: Int) extends IntEnumEntry
@@ -25,6 +27,12 @@ class RoundTripSpec extends AnyFlatSpec with Checkers {
   implicit class PBEquivalenceSyntax[A](val a: A)(implicit equivalence: PBEquivalence[A]) {
     def equiv(a2: A): Boolean = equivalence.equiv(a, a2)
   }
+
+  implicit def signedIntArb(implicit int: Arbitrary[Int]): Arbitrary[Int @@ Signed] =
+    Arbitrary(int.arbitrary.map(tag[Signed](_)))
+
+  implicit val fixedWidthIntArb: Arbitrary[Int @@ Fixed] =
+    Arbitrary(Gen.posNum[Int].map(tag[Fixed](_)))
 
   "round trip to protobuf and back" should "result in a message equivalent to the original" in check {
     forAllNoShrink { (message: MessageThree) =>
@@ -60,7 +68,9 @@ object RoundTripSpec {
       @pbIndex(15) emptyMessage: EmptyMessage,
       @pbIndex(20) nestedMessage: MessageOne,
       @pbIndex(21, 22, 23) coproduct: Option[Int :+: String :+: MessageOne :+: CNil],
-      @pbIndex(24, 25) either: Option[Either[Int, String]]
+      @pbIndex(24, 25) either: Option[Either[Int, String]],
+      @pbIndex(26) signedInt: Int @@ Signed,
+      @pbIndex(27) fixedWidthInt: Int @@ Fixed
   )
 
   case class MessageThree(

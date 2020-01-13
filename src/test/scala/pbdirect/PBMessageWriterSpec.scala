@@ -4,6 +4,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import shapeless._
 import shapeless.syntax.inject._
+import shapeless.tag.@@
 
 class PBMessageWriterSpec extends AnyWordSpecLike with Matchers {
   "PBMessageWriter" should {
@@ -132,6 +133,24 @@ class PBMessageWriterSpec extends AnyWordSpecLike with Matchers {
     "write a properly annotated message with an Either field (right)" in {
       val message = EitherMessage(5, Some(Right(8)))
       message.toPB shouldBe Array[Byte](8, 5, 40, 8)
+    }
+    "write a message with a signed int field" in {
+      case class SignedIntMessage(a: Int @@ Signed, b: String)
+      val message = SignedIntMessage(tag[Signed](-5), "Hello")
+      message.toPB shouldBe Array[Byte](8, 9, 18, 5, 72, 101, 108, 108, 111)
+    }
+    type SignedCop = (Int @@ Signed) :+: Int :+: CNil
+    case class SignedCoproductMessage(
+        @pbIndex(1) a: Int,
+        @pbIndex(3, 5) b: Option[SignedCop]
+    )
+    "write a message with a Coproduct field containing a signed int (1st branch)" in {
+      val message = SignedCoproductMessage(5, Some(tag[Signed](1).inject[SignedCop]))
+      message.toPB shouldBe Array[Byte](8, 5, 24, 2)
+    }
+    "write a message with a Coproduct field containing a signed int (2nd branch)" in {
+      val message = SignedCoproductMessage(5, Some(1.inject[SignedCop]))
+      message.toPB shouldBe Array[Byte](8, 5, 40, 1)
     }
   }
 }

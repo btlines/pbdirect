@@ -243,6 +243,58 @@ case class UnpackedMessage(
 )
 ```
 
+## Fancy integer types (signed/unsigned/fixed-width)
+
+You can tell pbdirect that an Int/Long field should be encoded in a special way
+by tagging its type with `Signed`, `Unsigned` or `Fixed`. For example:
+
+```scala
+import shapeless.tag.@@
+import pbdirect.{Signed, Unsigned, Fixed}
+
+case class IntsMessage(
+  normalInt            : Int,
+  signedInt            : Int @@ Signed,
+  unsignedInt          : Int @@ Unsigned,
+  fixedWidthInt        : Int @@ Fixed,
+  fixedSignedWidthInt  : Int @@ (Signed with Fixed),
+  normalLong           : Long,
+  signedLong           : Long @@ Signed,
+  unsignedLong         : Long @@ Unsigned,
+  fixedWidthLong       : Long @@ Fixed,
+  fixedSignedWidthLong : Long @@ (Signed with Fixed)
+)
+```
+
+would correspond to the following Protobuf definition:
+
+
+```protobuf
+message IntsMessage {
+  int32      normalInt              =   1;
+  sint32     signedInt              =   2;
+  uint32     unsignedInt            =   3;
+  fixed32    fixedWidthInt          =   4;
+  sfixed32   fixedSignedWidthInt    =   5;
+  int64      normalLong             =   6;
+  sint64     signedLong             =   7;
+  uint64     unsignedLong           =   8;
+  fixed64    fixedWidthLong         =   9;
+  sfixed64   fixedSignedWidthLong   =   10;
+}
+```
+
+You can also tag individual types inside coproducts, key and value types of maps
+and element types of lists:
+
+```scala
+case class AnotherIntsMessage(
+  @pbIndex(1, 2) signedIntOrNormalInt  : (Int @@ Signed) :+: Int :+: CNil,
+  @pbIndex(3)    signedIntFixedLongMap : Map[Int @@ Signed, Long @@ Fixed],
+  @pbIndex(4)    signedIntList         : List[Int @@ Signed]
+)
+```
+
 [comment]: # (Start Copyright)
 # Copyright
 

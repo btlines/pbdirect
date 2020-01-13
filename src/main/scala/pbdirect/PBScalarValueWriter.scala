@@ -7,6 +7,7 @@ import cats.syntax.contravariant._
 import com.google.protobuf.CodedOutputStream
 import com.google.protobuf.WireFormat._
 import enumeratum.values.IntEnumEntry
+import shapeless.tag.@@
 
 trait PBScalarValueWriter[A] {
 
@@ -78,6 +79,16 @@ trait LowPriorityPBScalarValueWriterImplicits {
 
 trait PBScalarValueWriterImplicits extends LowPriorityPBScalarValueWriterImplicits {
 
+  implicit object ContravariantWriter extends Contravariant[PBScalarValueWriter] {
+    override def contramap[A, B](writer: PBScalarValueWriter[A])(f: B => A) =
+      new PBScalarValueWriter[B] {
+        override def wireType: Int            = writer.wireType
+        override def isDefault(b: B): Boolean = writer.isDefault(f(b))
+        override def writeWithoutTag(b: B, out: CodedOutputStream): Unit =
+          writer.writeWithoutTag(f(b), out)
+      }
+  }
+
   implicit val booleanWriter: PBScalarValueWriter[Boolean] =
     new PBScalarValueWriter[Boolean] {
       override def wireType: Int                      = WIRETYPE_VARINT
@@ -86,23 +97,7 @@ trait PBScalarValueWriterImplicits extends LowPriorityPBScalarValueWriterImplici
         out.writeBoolNoTag(value)
     }
 
-  implicit val byteWriter: PBScalarValueWriter[Byte] =
-    new PBScalarValueWriter[Byte] {
-      override def wireType: Int                   = WIRETYPE_VARINT
-      override def isDefault(value: Byte): Boolean = value == 0.toByte
-      override def writeWithoutTag(value: Byte, out: CodedOutputStream): Unit =
-        out.writeInt32NoTag(value.toInt)
-    }
-
-  implicit val shortWriter: PBScalarValueWriter[Short] =
-    new PBScalarValueWriter[Short] {
-      override def wireType: Int                    = WIRETYPE_VARINT
-      override def isDefault(value: Short): Boolean = value == 0.toShort
-      override def writeWithoutTag(value: Short, out: CodedOutputStream): Unit =
-        out.writeInt32NoTag(value.toInt)
-    }
-
-  implicit val intWriter: PBScalarValueWriter[Int] =
+  implicit val untaggedIntWriter: PBScalarValueWriter[Int] =
     new PBScalarValueWriter[Int] {
       override def wireType: Int                  = WIRETYPE_VARINT
       override def isDefault(value: Int): Boolean = value == 0
@@ -110,12 +105,86 @@ trait PBScalarValueWriterImplicits extends LowPriorityPBScalarValueWriterImplici
         out.writeInt32NoTag(value)
     }
 
-  implicit val longWriter: PBScalarValueWriter[Long] =
+  implicit val unsignedIntWriter: PBScalarValueWriter[Int @@ Unsigned] =
+    new PBScalarValueWriter[Int @@ Unsigned] {
+      override def wireType: Int                              = WIRETYPE_VARINT
+      override def isDefault(value: Int @@ Unsigned): Boolean = value == 0
+      override def writeWithoutTag(value: Int @@ Unsigned, out: CodedOutputStream): Unit =
+        out.writeUInt32NoTag(value)
+    }
+
+  implicit val signedIntWriter: PBScalarValueWriter[Int @@ Signed] =
+    new PBScalarValueWriter[Int @@ Signed] {
+      override def wireType: Int                            = WIRETYPE_VARINT
+      override def isDefault(value: Int @@ Signed): Boolean = value == 0
+      override def writeWithoutTag(value: Int @@ Signed, out: CodedOutputStream): Unit =
+        out.writeSInt32NoTag(value)
+    }
+
+  implicit val fixedIntWriter: PBScalarValueWriter[Int @@ Fixed] =
+    new PBScalarValueWriter[Int @@ Fixed] {
+      override def wireType: Int                           = WIRETYPE_FIXED32
+      override def isDefault(value: Int @@ Fixed): Boolean = value == 0
+      override def writeWithoutTag(value: Int @@ Fixed, out: CodedOutputStream): Unit =
+        out.writeFixed32NoTag(value)
+    }
+
+  implicit val fixedSignedIntWriter: PBScalarValueWriter[Int @@ (Signed with Fixed)] =
+    new PBScalarValueWriter[Int @@ (Signed with Fixed)] {
+      override def wireType: Int                                         = WIRETYPE_FIXED32
+      override def isDefault(value: Int @@ (Signed with Fixed)): Boolean = value == 0
+      override def writeWithoutTag(
+          value: Int @@ (Signed with Fixed),
+          out: CodedOutputStream): Unit =
+        out.writeSFixed32NoTag(value)
+    }
+
+  implicit val byteWriter: PBScalarValueWriter[Byte] =
+    untaggedIntWriter.contramap[Byte](_.toInt)
+
+  implicit val shortWriter: PBScalarValueWriter[Short] =
+    untaggedIntWriter.contramap[Short](_.toInt)
+
+  implicit val untaggedLongWriter: PBScalarValueWriter[Long] =
     new PBScalarValueWriter[Long] {
       override def wireType: Int                   = WIRETYPE_VARINT
       override def isDefault(value: Long): Boolean = value == 0L
       override def writeWithoutTag(value: Long, out: CodedOutputStream): Unit =
         out.writeInt64NoTag(value)
+    }
+
+  implicit val unsignedLongWriter: PBScalarValueWriter[Long @@ Unsigned] =
+    new PBScalarValueWriter[Long @@ Unsigned] {
+      override def wireType: Int                               = WIRETYPE_VARINT
+      override def isDefault(value: Long @@ Unsigned): Boolean = value == 0L
+      override def writeWithoutTag(value: Long @@ Unsigned, out: CodedOutputStream): Unit =
+        out.writeUInt64NoTag(value)
+    }
+
+  implicit val signedLongWriter: PBScalarValueWriter[Long @@ Signed] =
+    new PBScalarValueWriter[Long @@ Signed] {
+      override def wireType: Int                             = WIRETYPE_VARINT
+      override def isDefault(value: Long @@ Signed): Boolean = value == 0L
+      override def writeWithoutTag(value: Long @@ Signed, out: CodedOutputStream): Unit =
+        out.writeSInt64NoTag(value)
+    }
+
+  implicit val fixedLongWriter: PBScalarValueWriter[Long @@ Fixed] =
+    new PBScalarValueWriter[Long @@ Fixed] {
+      override def wireType: Int                            = WIRETYPE_FIXED64
+      override def isDefault(value: Long @@ Fixed): Boolean = value == 0L
+      override def writeWithoutTag(value: Long @@ Fixed, out: CodedOutputStream): Unit =
+        out.writeFixed64NoTag(value)
+    }
+
+  implicit val fixedSignedLongWriter: PBScalarValueWriter[Long @@ (Signed with Fixed)] =
+    new PBScalarValueWriter[Long @@ (Signed with Fixed)] {
+      override def wireType: Int                                          = WIRETYPE_FIXED64
+      override def isDefault(value: Long @@ (Signed with Fixed)): Boolean = value == 0L
+      override def writeWithoutTag(
+          value: Long @@ (Signed with Fixed),
+          out: CodedOutputStream): Unit =
+        out.writeSFixed64NoTag(value)
     }
 
   implicit val floatWriter: PBScalarValueWriter[Float] =
@@ -194,16 +263,6 @@ trait PBScalarValueWriterImplicits extends LowPriorityPBScalarValueWriterImplici
       override def writeWithoutTag(entry: E, out: CodedOutputStream): Unit =
         out.writeInt32NoTag(entry.value)
     }
-
-  implicit object ContravariantWriter extends Contravariant[PBScalarValueWriter] {
-    override def contramap[A, B](writer: PBScalarValueWriter[A])(f: B => A) =
-      new PBScalarValueWriter[B] {
-        override def wireType: Int            = writer.wireType
-        override def isDefault(b: B): Boolean = writer.isDefault(f(b))
-        override def writeWithoutTag(b: B, out: CodedOutputStream): Unit =
-          writer.writeWithoutTag(f(b), out)
-      }
-  }
 
   implicit def leftWriter[A, B](
       implicit writer: PBScalarValueWriter[A]): PBScalarValueWriter[Left[A, B]] =

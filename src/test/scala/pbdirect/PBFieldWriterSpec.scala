@@ -5,6 +5,8 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import java.io.ByteArrayOutputStream
 import com.google.protobuf.CodedOutputStream
 import pbdirect.PBFieldWriter.Flags
+import shapeless.tag
+import shapeless.tag._
 
 class PBFieldWriterSpec extends AnyWordSpecLike with Matchers {
 
@@ -30,8 +32,42 @@ class PBFieldWriterSpec extends AnyWordSpecLike with Matchers {
     "write an Int to Protobuf" in {
       write(5) shouldBe Array[Byte](8, 5)
     }
+    "write an unsigned Int to Protobuf" in {
+      write[Int @@ Unsigned](tag.apply(5)) shouldBe Array[Byte](8, 5)
+    }
+    "write a signed Int to Protobuf" in {
+      write[Int @@ Signed](tag.apply(-5)) shouldBe Array[Byte](8, 9)
+    }
+    "write a fixed-width Int to Protobuf" in {
+      write[Int @@ Fixed](tag.apply(5)) shouldBe Array[Byte](13, 5, 0, 0, 0)
+    }
+    "write a signed fixed-width Int to Protobuf" in {
+      // In the Java protobuf implementation, writeSFixed32NoTag(Int)
+      // just delegates to writeFixed32NoTag(Int), so the result is
+      // the same as the test above.
+      write[Int @@ (Signed with Fixed)](tag.apply(5)) shouldBe Array[Byte](13, 5, 0, 0, 0)
+    }
     "write a Long to Protobuf" in {
       write(Int.MaxValue.toLong + 1) shouldBe Array[Byte](8, -128, -128, -128, -128, 8)
+    }
+    "write an unsigned Long to Protobuf" in {
+      write[Long @@ Unsigned](tag.apply(Int.MaxValue.toLong + 1)) shouldBe Array[Byte](8, -128,
+        -128, -128, -128, 8)
+    }
+    "write a signed Long to Protobuf" in {
+      write[Long @@ Signed](tag.apply(Int.MaxValue.toLong + 1)) shouldBe Array[Byte](8, -128, -128,
+        -128, -128, 16)
+    }
+    "write a fixed-width Long to Protobuf" in {
+      write[Long @@ Fixed](tag.apply(Int.MaxValue.toLong + 1)) shouldBe Array[Byte](9, 0, 0, 0,
+        -128, 0, 0, 0, 0)
+    }
+    "write a signed fixed-width Long to Protobuf" in {
+      // In the Java protobuf implementation, writeSFixed64NoTag(Long)
+      // just delegates to writeFixed64NoTag(Long), so the result is
+      // the same as the test above.
+      write[Long @@ (Signed with Fixed)](tag.apply(Int.MaxValue.toLong + 1)) shouldBe Array[Byte](9,
+        0, 0, 0, -128, 0, 0, 0, 0)
     }
     "write a Float to Protobuf" in {
       write(0.2F) shouldBe Array[Byte](13, -51, -52, 76, 62)
@@ -84,6 +120,10 @@ class PBFieldWriterSpec extends AnyWordSpecLike with Matchers {
     "write an empty List[Int] to Protobuf as a packed repeated field" in {
       write(Nil: List[Int]) shouldBe Array[Byte]()
     }
+    "write a List of signed ints to Protobuf as a packed repeated field" in {
+      val list: List[Int @@ Signed] = List(1, 2, 3, 4).map(tag[Signed](_))
+      write(list) shouldBe Array[Byte](10, 4, 2, 4, 6, 8)
+    }
     "write a List[Int] to Protobuf as an unpacked repeated field" in {
       val flags = Flags(skipDefaultValue = true, unpacked = true)
       write(1 :: 2 :: 3 :: 4 :: Nil, flags) shouldBe Array[Byte](8, 1, 8, 2, 8, 3, 8, 4)
@@ -98,6 +138,14 @@ class PBFieldWriterSpec extends AnyWordSpecLike with Matchers {
     "write a Map to Protobuf" in {
       write(Map(1 -> "one", 2 -> "two")) shouldBe Array[Byte](10, 7, 8, 1, 18, 3, 111, 110, 101, 10,
         7, 8, 2, 18, 3, 116, 119, 111)
+    }
+    "write a Map with signed keys to Protobuf" in {
+      val map: Map[Int @@ Signed, String] = Map(
+        tag[Signed](1) -> "one",
+        tag[Signed](2) -> "two"
+      )
+      write(map) shouldBe Array[Byte](10, 7, 8, 2, 18, 3, 111, 110, 101, 10, 7, 8, 4, 18, 3, 116,
+        119, 111)
     }
     "write a scala.collection.Map to Protobuf" in {
       write(collection.Map(1 -> "one", 2 -> "two")) shouldBe Array[Byte](10, 7, 8, 1, 18, 3, 111,
