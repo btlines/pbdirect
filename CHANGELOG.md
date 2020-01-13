@@ -1,5 +1,14 @@
 # Changelog
 
+## 01/13/2020 - Version 0.4.1
+
+Release changes:
+
+* Support reading/writing of Eithers as oneof fields ([#36](https://github.com/47deg/pbdirect/pull/36))
+* Support signed/unsigned/fixed-width integers ([#37](https://github.com/47deg/pbdirect/pull/37))
+* Release v0.4.1 ([#38](https://github.com/47deg/pbdirect/pull/38))
+
+
 ## 01/02/2020 - Version 0.4.0
 
 Release changes:
