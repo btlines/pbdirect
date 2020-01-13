@@ -68,35 +68,24 @@ trait PBScalarValueReaderImplicits extends PBScalarValueReaderImplicits_1 {
     override def read(input: CodedInputStream): Int = input.readInt32()
   }
 
-  implicit val unsignedIntReader: PBScalarValueReader[Int @@ Unsigned] =
-    new PBScalarValueReader[Int @@ Unsigned] {
-      override def defaultValue: Int @@ Unsigned = tag[Unsigned](0)
-      override def canBePacked: Boolean          = true
-      override def read(input: CodedInputStream): Int @@ Unsigned =
-        tag[Unsigned](input.readUInt32())
+  def taggedIntReader[T](readInt: CodedInputStream => Int): PBScalarValueReader[Int @@ T] =
+    new PBScalarValueReader[Int @@ T] {
+      override def defaultValue: Int @@ T                  = tag[T](0)
+      override def canBePacked: Boolean                    = true
+      override def read(input: CodedInputStream): Int @@ T = tag[T](readInt(input))
     }
+
+  implicit val unsignedIntReader: PBScalarValueReader[Int @@ Unsigned] =
+    taggedIntReader[Unsigned](_.readUInt32())
 
   implicit val signedIntReader: PBScalarValueReader[Int @@ Signed] =
-    new PBScalarValueReader[Int @@ Signed] {
-      override def defaultValue: Int @@ Signed                  = tag[Signed](0)
-      override def canBePacked: Boolean                         = true
-      override def read(input: CodedInputStream): Int @@ Signed = tag[Signed](input.readSInt32())
-    }
+    taggedIntReader[Signed](_.readSInt32())
 
   implicit val fixedIntReader: PBScalarValueReader[Int @@ Fixed] =
-    new PBScalarValueReader[Int @@ Fixed] {
-      override def defaultValue: Int @@ Fixed                  = tag[Fixed](0)
-      override def canBePacked: Boolean                        = true
-      override def read(input: CodedInputStream): Int @@ Fixed = tag[Fixed](input.readFixed32())
-    }
+    taggedIntReader[Fixed](_.readFixed32())
 
   implicit val fixedSignedIntReader: PBScalarValueReader[Int @@ (Signed with Fixed)] =
-    new PBScalarValueReader[Int @@ (Signed with Fixed)] {
-      override def defaultValue: Int @@ (Signed with Fixed) = tag[(Signed with Fixed)](0)
-      override def canBePacked: Boolean                     = true
-      override def read(input: CodedInputStream): Int @@ (Signed with Fixed) =
-        tag[(Signed with Fixed)](input.readSFixed32())
-    }
+    taggedIntReader[Signed with Fixed](_.readSFixed32())
 
   // Stored as variants, but larger in memory: https://groups.google.com/forum/#!topic/protobuf/Er39mNGnRWU
   implicit val byteReader: PBScalarValueReader[Byte] = untaggedIntReader.map(_.toByte)
@@ -110,35 +99,24 @@ trait PBScalarValueReaderImplicits extends PBScalarValueReaderImplicits_1 {
     override def read(input: CodedInputStream): Long = input.readInt64()
   }
 
-  implicit val unsignedLongReader: PBScalarValueReader[Long @@ Unsigned] =
-    new PBScalarValueReader[Long @@ Unsigned] {
-      override def defaultValue: Long @@ Unsigned = tag[Unsigned](0L)
-      override def canBePacked: Boolean           = true
-      override def read(input: CodedInputStream): Long @@ Unsigned =
-        tag[Unsigned](input.readUInt64())
+  def taggedLongReader[T](readLong: CodedInputStream => Long): PBScalarValueReader[Long @@ T] =
+    new PBScalarValueReader[Long @@ T] {
+      override def defaultValue: Long @@ T                  = tag[T](0L)
+      override def canBePacked: Boolean                     = true
+      override def read(input: CodedInputStream): Long @@ T = tag[T](readLong(input))
     }
+
+  implicit val unsignedLongReader: PBScalarValueReader[Long @@ Unsigned] =
+    taggedLongReader[Unsigned](_.readUInt64())
 
   implicit val signedLongReader: PBScalarValueReader[Long @@ Signed] =
-    new PBScalarValueReader[Long @@ Signed] {
-      override def defaultValue: Long @@ Signed                  = tag[Signed](0L)
-      override def canBePacked: Boolean                          = true
-      override def read(input: CodedInputStream): Long @@ Signed = tag[Signed](input.readSInt64())
-    }
+    taggedLongReader[Signed](_.readSInt64())
 
   implicit val fixedLongReader: PBScalarValueReader[Long @@ Fixed] =
-    new PBScalarValueReader[Long @@ Fixed] {
-      override def defaultValue: Long @@ Fixed                  = tag[Fixed](0L)
-      override def canBePacked: Boolean                         = true
-      override def read(input: CodedInputStream): Long @@ Fixed = tag[Fixed](input.readFixed64())
-    }
+    taggedLongReader[Fixed](_.readFixed64())
 
   implicit val fixedSignedLongReader: PBScalarValueReader[Long @@ (Signed with Fixed)] =
-    new PBScalarValueReader[Long @@ (Signed with Fixed)] {
-      override def defaultValue: Long @@ (Signed with Fixed) = tag[(Signed with Fixed)](0L)
-      override def canBePacked: Boolean                      = true
-      override def read(input: CodedInputStream): Long @@ (Signed with Fixed) =
-        tag[(Signed with Fixed)](input.readSFixed64())
-    }
+    taggedLongReader[Signed with Fixed](_.readSFixed64())
 
   implicit val floatReader: PBScalarValueReader[Float] = new PBScalarValueReader[Float] {
     override def defaultValue: Float                  = 0.0F
