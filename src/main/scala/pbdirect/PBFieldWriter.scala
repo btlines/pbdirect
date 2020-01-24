@@ -17,7 +17,8 @@ trait PBFieldWriterImplicits {
           index: Int,
           value: A,
           out: CodedOutputStream,
-          flags: PBFieldWriter.Flags): Unit =
+          flags: PBFieldWriter.Flags
+      ): Unit =
         f(index, value, out, flags)
     }
 
@@ -56,19 +57,22 @@ trait PBFieldWriterImplicits {
     }
 
   implicit def mapWriter[K, V](
-      implicit writer: PBFieldWriter[List[(K, V)]]): PBFieldWriter[Map[K, V]] =
+      implicit writer: PBFieldWriter[List[(K, V)]]
+  ): PBFieldWriter[Map[K, V]] =
     instance { (index: Int, value: Map[K, V], out: CodedOutputStream, flags: PBFieldWriter.Flags) =>
       writer.writeTo(index, value.toList, out, flags)
     }
 
   implicit def collectionMapWriter[K, V](
-      implicit writer: PBFieldWriter[List[(K, V)]]): PBFieldWriter[collection.Map[K, V]] =
+      implicit writer: PBFieldWriter[List[(K, V)]]
+  ): PBFieldWriter[collection.Map[K, V]] =
     instance {
       (
           index: Int,
           value: collection.Map[K, V],
           out: CodedOutputStream,
-          flags: PBFieldWriter.Flags) =>
+          flags: PBFieldWriter.Flags
+      ) =>
         writer.writeTo(index, value.toList, out, flags)
     }
 

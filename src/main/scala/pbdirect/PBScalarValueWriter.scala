@@ -62,7 +62,8 @@ trait PBScalarValueWriter[A] {
 trait LowPriorityPBScalarValueWriterImplicits {
 
   implicit def embeddedMessageWriter[A](
-      implicit messageWriter: PBMessageWriter[A]): PBScalarValueWriter[A] =
+      implicit messageWriter: PBMessageWriter[A]
+  ): PBScalarValueWriter[A] =
     new PBScalarValueWriter[A] {
       override def wireType: Int                  = WIRETYPE_LENGTH_DELIMITED
       override def isDefault(message: A): Boolean = false
@@ -135,7 +136,8 @@ trait PBScalarValueWriterImplicits extends LowPriorityPBScalarValueWriterImplici
       override def isDefault(value: Int @@ (Signed with Fixed)): Boolean = value == 0
       override def writeWithoutTag(
           value: Int @@ (Signed with Fixed),
-          out: CodedOutputStream): Unit =
+          out: CodedOutputStream
+      ): Unit =
         out.writeSFixed32NoTag(value)
     }
 
@@ -183,14 +185,15 @@ trait PBScalarValueWriterImplicits extends LowPriorityPBScalarValueWriterImplici
       override def isDefault(value: Long @@ (Signed with Fixed)): Boolean = value == 0L
       override def writeWithoutTag(
           value: Long @@ (Signed with Fixed),
-          out: CodedOutputStream): Unit =
+          out: CodedOutputStream
+      ): Unit =
         out.writeSFixed64NoTag(value)
     }
 
   implicit val floatWriter: PBScalarValueWriter[Float] =
     new PBScalarValueWriter[Float] {
       override def wireType: Int                    = WIRETYPE_FIXED32
-      override def isDefault(value: Float): Boolean = value == 0.0F
+      override def isDefault(value: Float): Boolean = value == 0.0f
       override def writeWithoutTag(value: Float, out: CodedOutputStream): Unit =
         out.writeFloatNoTag(value)
     }
@@ -221,7 +224,8 @@ trait PBScalarValueWriterImplicits extends LowPriorityPBScalarValueWriterImplici
 
   implicit def keyValuePairWriter[K, V](
       implicit keyWriter: PBScalarValueWriter[K],
-      valueWriter: PBScalarValueWriter[V]): PBScalarValueWriter[(K, V)] =
+      valueWriter: PBScalarValueWriter[V]
+  ): PBScalarValueWriter[(K, V)] =
     new PBScalarValueWriter[(K, V)] {
       override def wireType: Int = WIRETYPE_LENGTH_DELIMITED
       override def isDefault(pair: (K, V)): Boolean =
@@ -240,7 +244,8 @@ trait PBScalarValueWriterImplicits extends LowPriorityPBScalarValueWriterImplici
 
   implicit def enumWriter[E](
       implicit values: Enum.Values[E],
-      ordering: Ordering[E]): PBScalarValueWriter[E] =
+      ordering: Ordering[E]
+  ): PBScalarValueWriter[E] =
     new PBScalarValueWriter[E] {
       override def wireType: Int                = WIRETYPE_VARINT
       override def isDefault(value: E): Boolean = Enum.toInt(value) == 0
@@ -265,12 +270,14 @@ trait PBScalarValueWriterImplicits extends LowPriorityPBScalarValueWriterImplici
     }
 
   implicit def leftWriter[A, B](
-      implicit writer: PBScalarValueWriter[A]): PBScalarValueWriter[Left[A, B]] =
-    writer.contramap(_.a)
+      implicit writer: PBScalarValueWriter[A]
+  ): PBScalarValueWriter[Left[A, B]] =
+    writer.contramap(_.value)
 
   implicit def rightWriter[A, B](
-      implicit writer: PBScalarValueWriter[B]): PBScalarValueWriter[Right[A, B]] =
-    writer.contramap(_.b)
+      implicit writer: PBScalarValueWriter[B]
+  ): PBScalarValueWriter[Right[A, B]] =
+    writer.contramap(_.value)
 
 }
 

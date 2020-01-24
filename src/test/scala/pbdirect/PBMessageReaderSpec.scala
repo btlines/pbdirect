@@ -48,7 +48,8 @@ class PBMessageReaderSpec extends AnyWordSpecLike with Matchers {
       case class InnerMessage(@pbIndex(1) value: Option[Int])
       case class OuterMessage(
           @pbIndex(1) text: Option[String],
-          @pbIndex(2) inner: Option[InnerMessage])
+          @pbIndex(2) inner: Option[InnerMessage]
+      )
       val bytes = Array[Byte](10, 5, 72, 101, 108, 108, 111, 18, 2, 8, 11)
       bytes.pbTo[OuterMessage] shouldBe OuterMessage(Some("Hello"), Some(InnerMessage(Some(11))))
     }
@@ -58,10 +59,11 @@ class PBMessageReaderSpec extends AnyWordSpecLike with Matchers {
           @pbIndex(2) service: String,
           @pbIndex(3) node: String,
           @pbIndex(4) value: Float,
-          @pbIndex(5) count: Int)
+          @pbIndex(5) count: Int
+      )
       case class Metrics(@pbIndex(1) metrics: List[Metric])
       val message = Metrics(
-        Metric("metric", "microservices", "node", 12F, 12345) :: Nil
+        Metric("metric", "microservices", "node", 12f, 12345) :: Nil
       )
       val bytes = Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114,
         111, 115, 101, 114, 118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40,

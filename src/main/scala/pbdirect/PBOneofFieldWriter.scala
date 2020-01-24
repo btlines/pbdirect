@@ -8,29 +8,33 @@ trait PBOneofFieldWriter[A <: Coproduct] {
       indices: List[Int],
       value: A,
       out: CodedOutputStream,
-      flags: PBFieldWriter.Flags): Unit
+      flags: PBFieldWriter.Flags
+  ): Unit
 }
 
 trait PBOneofFieldWriterImplicits {
 
   def instance[A <: Coproduct](
-      f: (List[Int], A, CodedOutputStream, PBFieldWriter.Flags) => Unit): PBOneofFieldWriter[A] =
+      f: (List[Int], A, CodedOutputStream, PBFieldWriter.Flags) => Unit
+  ): PBOneofFieldWriter[A] =
     new PBOneofFieldWriter[A] {
       override def writeTo(
           indices: List[Int],
           value: A,
           out: CodedOutputStream,
-          flags: PBFieldWriter.Flags): Unit =
+          flags: PBFieldWriter.Flags
+      ): Unit =
         f(indices, value, out, flags)
     }
 
-  implicit val cnilWriter: PBOneofFieldWriter[CNil] = instance(
-    (_, _, _, _) => throw new IllegalStateException("Cannot write CNil"))
+  implicit val cnilWriter: PBOneofFieldWriter[CNil] =
+    instance((_, _, _, _) => throw new IllegalStateException("Cannot write CNil"))
 
   implicit def cconsWriter[H, T <: Coproduct](
       implicit
       headWriter: PBFieldWriter[H],
-      tailWriter: Lazy[PBOneofFieldWriter[T]]): PBOneofFieldWriter[H :+: T] =
+      tailWriter: Lazy[PBOneofFieldWriter[T]]
+  ): PBOneofFieldWriter[H :+: T] =
     instance {
       (indices: List[Int], value: H :+: T, out: CodedOutputStream, flags: PBFieldWriter.Flags) =>
         value match {

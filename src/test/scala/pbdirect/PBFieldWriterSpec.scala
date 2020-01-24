@@ -11,7 +11,8 @@ import shapeless.tag._
 class PBFieldWriterSpec extends AnyWordSpecLike with Matchers {
 
   def write[A](value: A, flags: Flags = Flags(skipDefaultValue = true, unpacked = false))(
-      implicit writer: PBFieldWriter[A]): Array[Byte] = {
+      implicit writer: PBFieldWriter[A]
+  ): Array[Byte] = {
     val buffer = new ByteArrayOutputStream()
     val out    = CodedOutputStream.newInstance(buffer)
     writer.writeTo(1, value, out, flags)
@@ -70,10 +71,10 @@ class PBFieldWriterSpec extends AnyWordSpecLike with Matchers {
         0, 0, 0, -128, 0, 0, 0, 0)
     }
     "write a Float to Protobuf" in {
-      write(0.2F) shouldBe Array[Byte](13, -51, -52, 76, 62)
+      write(0.2f) shouldBe Array[Byte](13, -51, -52, 76, 62)
     }
     "write a Double to Protobuf" in {
-      write(0.00000000002D) shouldBe Array[Byte](9, -107, 100, 121, -31, 127, -3, -75, 61)
+      write(0.00000000002d) shouldBe Array[Byte](9, -107, 100, 121, -31, 127, -3, -75, 61)
     }
     "write a String to Protobuf" in {
       write("Hello") shouldBe Array[Byte](10, 5, 72, 101, 108, 108, 111)
@@ -167,7 +168,7 @@ class PBFieldWriterSpec extends AnyWordSpecLike with Matchers {
           @pbIndex(4) value: Float,
           @pbIndex(5) count: Int
       )
-      write(Metric("metric", "microservices", "node", 12F, 12345) :: Nil) shouldBe Array[Byte](10,
+      write(Metric("metric", "microservices", "node", 12f, 12345) :: Nil) shouldBe Array[Byte](10,
         37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114, 111, 115, 101, 114, 118,
         105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40, -71, 96)
     }
