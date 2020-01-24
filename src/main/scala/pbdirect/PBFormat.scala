@@ -19,7 +19,8 @@ trait PBFormatImplicits {
 object PBFormat extends PBFormatImplicits {
   def apply[A](
       implicit reader: PBScalarValueReader[A],
-      writer: PBScalarValueWriter[A]): PBFormat[A] =
+      writer: PBScalarValueWriter[A]
+  ): PBFormat[A] =
     new PBFormat[A] {
       override def read(input: CodedInputStream): A = reader.read(input)
       override def wireType: Int                    = writer.wireType

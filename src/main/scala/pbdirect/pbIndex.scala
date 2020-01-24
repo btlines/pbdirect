@@ -14,4 +14,4 @@ package pbdirect
  * )
  * }}}
  */
-case class pbIndex(first: Int, more: Int*)
+case class pbIndex(first: Int, more: Int*) extends scala.annotation.Annotation

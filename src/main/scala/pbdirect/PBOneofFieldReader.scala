@@ -17,7 +17,8 @@ trait PBOneofFieldReaderImplicits {
   implicit def cconsReader[H, T <: Coproduct](
       implicit
       headReader: PBFieldReader[Option[H]],
-      tailReader: Lazy[PBOneofFieldReader[T]]): PBOneofFieldReader[H :+: T] =
+      tailReader: Lazy[PBOneofFieldReader[T]]
+  ): PBOneofFieldReader[H :+: T] =
     instance { (indices: List[Int], bytes: Array[Byte]) =>
       headReader
         .read(indices.head, bytes)

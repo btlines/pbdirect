@@ -46,14 +46,16 @@ trait PBMessageWriterImplicits {
       UA <: HList,
       ZWI <: HList,
       ZWFI <: HList,
-      ZWM <: HList](
+      ZWM <: HList
+  ](
       implicit gen: Generic.Aux[A, R],
       indexAnns: Annotations.Aux[pbIndex, A, IA],
       unpackedAnns: Annotations.Aux[pbUnpacked, A, UA],
       zwi: ZipWithIndex.Aux[R, ZWI],
       zwfi: ZipWith.Aux[IA, ZWI, zipWithFieldIndex.type, ZWFI],
       zwm: ZipWith.Aux[ZWFI, UA, zipWithModifiers.type, ZWM],
-      writer: Lazy[PBProductWriter[ZWM]]): PBMessageWriter[A] =
+      writer: Lazy[PBProductWriter[ZWM]]
+  ): PBMessageWriter[A] =
     instance { (value: A, out: CodedOutputStream) =>
       val fields                     = gen.to(value)
       val fieldsWithIndices          = fields.zipWithIndex

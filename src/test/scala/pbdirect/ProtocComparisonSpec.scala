@@ -1,5 +1,3 @@
-
-
 package pbdirect
 
 import org.scalatest.flatspec._
@@ -171,14 +169,14 @@ object ProtocComparisonSpec {
     def string(x: String): String = {
       val escaped = x
         .replaceAllLiterally("""\""", """\\""") // escape backslashes
-        .replaceAllLiterally("\n", "\\n") // escape newlines and other control characters
+        .replaceAllLiterally("\n", "\\n")       // escape newlines and other control characters
         .replaceAllLiterally("\r", "\\r")
         .replaceAllLiterally("\b", "\\b")
         .replaceAllLiterally("\f", "\\f")
         .replaceAllLiterally("\t", "\\t")
         .replaceAllLiterally("\u0000", "\\0")
         .replaceAllLiterally(""""""", """\"""") // esape double quotes
-      s""""$escaped"""" // wrap in double quotes
+      s""""$escaped""""                         // wrap in double quotes
     }
 
     def stringStringMap(map: Map[String, String]): String = {

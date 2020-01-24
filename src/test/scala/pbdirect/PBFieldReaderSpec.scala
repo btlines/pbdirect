@@ -66,11 +66,11 @@ class PBFieldReaderSpec extends AnyWordSpecLike with Matchers {
     }
     "read a Float from Protobuf" in {
       val bytes = Array[Byte](13, -51, -52, 76, 62)
-      PBFieldReader[Float].read(1, bytes) shouldBe 0.2F
+      PBFieldReader[Float].read(1, bytes) shouldBe 0.2f
     }
     "read a Double from Protobuf" in {
       val bytes = Array[Byte](9, -107, 100, 121, -31, 127, -3, -75, 61)
-      PBFieldReader[Double].read(1, bytes) shouldBe 0.00000000002D
+      PBFieldReader[Double].read(1, bytes) shouldBe 0.00000000002d
     }
     "read a String from Protobuf" in {
       val bytes = Array[Byte](10, 5, 72, 101, 108, 108, 111)
@@ -147,12 +147,13 @@ class PBFieldReaderSpec extends AnyWordSpecLike with Matchers {
           @pbIndex(2) service: String,
           @pbIndex(3) node: String,
           @pbIndex(4) value: Float,
-          @pbIndex(5) count: Int)
+          @pbIndex(5) count: Int
+      )
       val bytes = Array[Byte](10, 37, 10, 6, 109, 101, 116, 114, 105, 99, 18, 13, 109, 105, 99, 114,
         111, 115, 101, 114, 118, 105, 99, 101, 115, 26, 4, 110, 111, 100, 101, 37, 0, 0, 64, 65, 40,
         -71, 96)
       PBFieldReader[List[Metric]]
-        .read(1, bytes) shouldBe Metric("metric", "microservices", "node", 12F, 12345) :: Nil
+        .read(1, bytes) shouldBe Metric("metric", "microservices", "node", 12f, 12345) :: Nil
     }
     "use the default value when reading a missing Boolean from Protobuf" in {
       PBFieldReader[Boolean].read(1, Array.empty[Byte]) shouldBe false
@@ -170,7 +171,7 @@ class PBFieldReaderSpec extends AnyWordSpecLike with Matchers {
       PBFieldReader[Long].read(1, Array.empty[Byte]) shouldBe 0L
     }
     "use the default value when reading a missing Float from Protobuf" in {
-      PBFieldReader[Float].read(1, Array.empty[Byte]) shouldBe 0.0F
+      PBFieldReader[Float].read(1, Array.empty[Byte]) shouldBe 0.0f
     }
     "use the default value when reading a missing Double from Protobuf" in {
       PBFieldReader[Double].read(1, Array.empty[Byte]) shouldBe 0.0

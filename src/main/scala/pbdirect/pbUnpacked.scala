@@ -17,4 +17,4 @@ package pbdirect
  * This is the standard proto3 behaviour.
  *
  */
-case class pbUnpacked()
+case class pbUnpacked() extends scala.annotation.Annotation

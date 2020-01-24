@@ -20,8 +20,8 @@ object ProjectPlugin extends AutoPlugin {
     lazy val V = new {
       val cats: String                = "2.0.0"
       val protobuf: String            = "3.11.1"
-      val scala211: String            = "2.11.12"
       val scala212: String            = "2.12.10"
+      val scala213: String            = "2.13.1"
       val shapeless: String           = "2.3.3"
       val enumeratum: String          = "1.5.15"
       val scalaTest: String           = "3.1.0"
@@ -44,7 +44,8 @@ object ProjectPlugin extends AutoPlugin {
   }
 
   override def projectSettings: Seq[Def.Setting[_]] =
-    sharedReleaseProcess ++ warnUnusedImport ++ Seq(
+    // TODO re-add `warnUnusedImport` after upgrading sbt-org-policies
+    sharedReleaseProcess ++ Seq(
       orgProjectName := "pbdirect",
       orgGithubSetting := GitHubSettings(
         organization = "47deg",
@@ -60,7 +61,7 @@ object ProjectPlugin extends AutoPlugin {
       headerMappings := headerMappings.value + (HeaderFileType.scala -> HeaderCommentStyle.CppStyleLineComment),
       startYear := Some(2019),
       scalaVersion := V.scala212,
-      crossScalaVersions := Seq(scalaVersion.value, V.scala211),
+      crossScalaVersions := Seq(scalaVersion.value, V.scala213),
       libraryDependencies ++= Seq(
         "com.chuusai"                %% "shapeless"                 % V.shapeless,
         "org.typelevel"              %% "cats-core"                 % V.cats,

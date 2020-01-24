@@ -20,7 +20,8 @@ trait PBProductWriterImplicits {
 
   implicit def hconsWriter[H, T <: HList](
       implicit head: PBFieldWriter[H],
-      tail: Lazy[PBProductWriter[T]]): PBProductWriter[(FieldIndex, H, FieldModifiers) :: T] =
+      tail: Lazy[PBProductWriter[T]]
+  ): PBProductWriter[(FieldIndex, H, FieldModifiers) :: T] =
     instance { (indexedValues: (FieldIndex, H, FieldModifiers) :: T, out: CodedOutputStream) =>
       val headIndex     = indexedValues.head._1.values.head
       val headValue     = indexedValues.head._2
@@ -32,8 +33,8 @@ trait PBProductWriterImplicits {
 
   implicit def hconsCoproductOneofWriter[H <: Coproduct, T <: HList](
       implicit head: PBOneofFieldWriter[H],
-      tail: Lazy[PBProductWriter[T]]): PBProductWriter[
-    (FieldIndex, Option[H], FieldModifiers) :: T] =
+      tail: Lazy[PBProductWriter[T]]
+  ): PBProductWriter[(FieldIndex, Option[H], FieldModifiers) :: T] =
     instance {
       (indexedValues: (FieldIndex, Option[H], FieldModifiers) :: T, out: CodedOutputStream) =>
         indexedValues.head match {
@@ -54,7 +55,8 @@ trait PBProductWriterImplicits {
     instance {
       (
           indexedValues: (FieldIndex, Option[Either[A, B]], FieldModifiers) :: T,
-          out: CodedOutputStream) =>
+          out: CodedOutputStream
+      ) =>
         val headEitherAsCoproduct: Option[H] = indexedValues.head._2.map(gen.to)
         val head                             = indexedValues.head.copy(_2 = headEitherAsCoproduct)
         productWriter.writeTo(head :: indexedValues.tail, out)

@@ -146,7 +146,8 @@ trait PBEquivalenceImplicits_1 extends PBEquivalenceImplicits_2 {
     }
 
   def option[A](description: String, defaultValue: A)(
-      implicit equiv: PBEquivalence[A]): PBEquivalence[Option[A]] =
+      implicit equiv: PBEquivalence[A]
+  ): PBEquivalence[Option[A]] =
     instance(description) {
       case (Some(x), None) if equiv.equiv(x, defaultValue) => true
       case (Some(_), None)                                 => false
@@ -160,7 +161,7 @@ trait PBEquivalenceImplicits_1 extends PBEquivalenceImplicits_2 {
   implicit val shortOption: PBEquivalence[Option[Short]]   = option("shortOption", 0.toShort)
   implicit val intOption: PBEquivalence[Option[Int]]       = option("intOption", 0)
   implicit val longOption: PBEquivalence[Option[Long]]     = option("longOption", 0L)
-  implicit val floatOption: PBEquivalence[Option[Float]]   = option("floatOption", 0.0F)
+  implicit val floatOption: PBEquivalence[Option[Float]]   = option("floatOption", 0.0f)
   implicit val doubleOption: PBEquivalence[Option[Double]] = option("doubleOption", 0.0)
   implicit val boolOption: PBEquivalence[Option[Boolean]]  = option("boolOption", false)
   implicit val stringOption: PBEquivalence[Option[String]] = option("stringOption", "")
@@ -171,7 +172,8 @@ trait PBEquivalenceImplicits_1 extends PBEquivalenceImplicits_2 {
 
   implicit def either[A, B](
       implicit aEquiv: PBEquivalence[A],
-      bEquiv: PBEquivalence[B]): PBEquivalence[Either[A, B]] = instance("either") {
+      bEquiv: PBEquivalence[B]
+  ): PBEquivalence[Either[A, B]] = instance("either") {
     case (Left(a1), Left(a2))   => aEquiv.equiv(a1, a2)
     case (Right(b1), Right(b2)) => bEquiv.equiv(b1, b2)
     case _                      => false
@@ -194,7 +196,8 @@ trait PBEquivalenceImplicits_1 extends PBEquivalenceImplicits_2 {
       implicit
       gen: Generic.Aux[A, R],
       fieldEquivs: ZipWith.Aux[R, R, fieldEquivalence.type, FEs],
-      fold: LeftFolder.Aux[FEs, Boolean, conj.type, Boolean]): PBEquivalence[A] =
+      fold: LeftFolder.Aux[FEs, Boolean, conj.type, Boolean]
+  ): PBEquivalence[A] =
     instance("message") {
       case (a1, a2) =>
         val hlist1   = gen.to(a1)
