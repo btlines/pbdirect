@@ -26,7 +26,7 @@ object ProjectPlugin extends AutoPlugin {
       val enumeratum: String          = "1.5.15"
       val scalaTest: String           = "3.1.0"
       val scalatestScalacheck: String = "3.1.0.1"
-      val scalacheckShapeless: String = "1.2.3"
+      val scalacheckShapeless: String = "1.2.4"
       val protocJar: String           = "3.11.1"
     }
   }
