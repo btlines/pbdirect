@@ -1,22 +1,5 @@
 # Changelog
 
-## 02/19/2020 - Version 0.5.0
-
-Release changes:
-
-* Update sbt to 1.3.7 ([#39](https://github.com/47deg/pbdirect/pull/39))
-* Update sbt-org-policies to 0.12.3 ([#40](https://github.com/47deg/pbdirect/pull/40))
-* Cross build for 2.13 and drop 2.11 ([#41](https://github.com/47deg/pbdirect/pull/41))
-* Update cats-core to 2.1.0 ([#42](https://github.com/47deg/pbdirect/pull/42))
-* Update protobuf-java to 3.11.3 ([#43](https://github.com/47deg/pbdirect/pull/43))
-* Update sbt to 1.3.8 ([#45](https://github.com/47deg/pbdirect/pull/45))
-* Update scalacheck-shapeless_1.14 to 1.2.4 ([#44](https://github.com/47deg/pbdirect/pull/44))
-* Update protobuf-java to 3.11.4 ([#46](https://github.com/47deg/pbdirect/pull/46))
-* Update scalafmt-core to 2.4.0 ([#47](https://github.com/47deg/pbdirect/pull/47))
-* Update scalafmt-core to 2.4.1 ([#48](https://github.com/47deg/pbdirect/pull/48))
-* Releases 0.5.0 ([#49](https://github.com/47deg/pbdirect/pull/49))
-
-
 ## 01/13/2020 - Version 0.4.1
 
 Release changes:
