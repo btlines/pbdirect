@@ -18,7 +18,7 @@ object ProjectPlugin extends AutoPlugin {
   object autoImport {
 
     lazy val V = new {
-      val cats: String                = "2.1.0"
+      val cats: String                = "2.1.1"
       val protobuf: String            = "3.11.4"
       val scala212: String            = "2.12.10"
       val scala213: String            = "2.13.1"
