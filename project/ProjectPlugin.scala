@@ -48,7 +48,7 @@ object ProjectPlugin extends AutoPlugin {
     sharedReleaseProcess ++ Seq(
       orgProjectName := "pbdirect",
       orgGithubSetting := GitHubSettings(
-        organization = "47deg",
+        organization = "47degrees",
         project = (name in LocalRootProject).value,
         organizationName = "47 Degrees",
         groupId = "com.47deg",
@@ -88,7 +88,7 @@ object ProjectPlugin extends AutoPlugin {
         GitHubIssuesBadge.apply
       ),
       orgEnforcedFilesSetting := List(
-        ContributingFileType(orgProjectName.value, orgGithubSetting.value.copy(organization = "47deg", project = "pbdirect")),
+        ContributingFileType(orgProjectName.value, orgGithubSetting.value.copy(organization = "47degrees", project = "pbdirect")),
         AuthorsFileType(name.value, orgGithubSetting.value, orgMaintainersSetting.value, orgContributorsSetting.value),
         NoticeFileType(orgProjectName.value, orgGithubSetting.value, orgLicenseSetting.value, startYear.value),
         VersionSbtFileType,

@@ -1,7 +1,7 @@
 # Contributing
 
 Discussion around pbdirect happens in the [Gitter channel](https://gitter.im/47deg/pbdirect) as well as on
-[GitHub issues](https://github.com/47deg/pbdirect/issues) and [pull requests](https://github.com/47deg/pbdirect/pulls).
+[GitHub issues](https://github.com/47degrees/pbdirect/issues) and [pull requests](https://github.com/47degrees/pbdirect/pulls).
 
 Feel free to open an issue if you notice a bug, have an idea for a feature, or have a question about
 the code. Pull requests are also welcome.
