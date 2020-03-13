@@ -1,5 +1,19 @@
 # Changelog
 
+## 03/13/2020 - Version 0.5.1
+
+Release changes:
+
+* Update scalacheck-1-14 to 3.1.1.1 ([#55](https://github.com/47degrees/pbdirect/pull/55))
+* Update scalafmt-core to 2.4.2 ([#56](https://github.com/47degrees/pbdirect/pull/56))
+* Update sbt-org-policies to 0.13.1 ([#57](https://github.com/47degrees/pbdirect/pull/57))
+* Update cats-core to 2.1.1 ([#58](https://github.com/47degrees/pbdirect/pull/58))
+* Update scalacheck-shapeless_1.14 to 1.2.5 ([#59](https://github.com/47degrees/pbdirect/pull/59))
+* Update protoc-jar to 3.11.4 ([#60](https://github.com/47degrees/pbdirect/pull/60))
+* Migrates from 47deg to 47degrees GH organization ([#61](https://github.com/47degrees/pbdirect/pull/61))
+* Release 0.5.1 ([#62](https://github.com/47degrees/pbdirect/pull/62))
+
+
 ## 02/21/2020 - Version 0.5.0
 
 Release changes:
