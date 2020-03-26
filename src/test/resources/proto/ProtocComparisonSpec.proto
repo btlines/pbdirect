@@ -1,5 +1,11 @@
 syntax = "proto3";
 
+enum Weather {
+  SUNNY = 0;
+  CLOUDY = 1;
+  RAINY = 2;
+}
+
 message MessageOne {
   double dbl = 1;
   bool boolean = 2;
@@ -29,4 +35,6 @@ message MessageThree {
   MessageTwo messageTwo = 11;
   map<int32, MessageTwo> intMessageTwoMap = 12;
   map<sint32, fixed64> signedIntFixedLongMap = 13;
+  Weather weather = 14;
+  repeated Weather weathers = 15;
 }

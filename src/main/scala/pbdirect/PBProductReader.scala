@@ -14,8 +14,7 @@ trait PBProductReaderImplicits {
     }
 
   implicit val hnilProductReader: PBProductReader[HNil, HNil] = PBProductReader.instance {
-    (indices: HNil, bytes: Array[Byte]) =>
-      HNil
+    (indices: HNil, bytes: Array[Byte]) => HNil
   }
 
   implicit def hconsProductReader[H, T <: HList, IT <: HList](
