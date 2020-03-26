@@ -72,8 +72,7 @@ trait PBFieldWriterImplicits {
           value: collection.Map[K, V],
           out: CodedOutputStream,
           flags: PBFieldWriter.Flags
-      ) =>
-        writer.writeTo(index, value.toList, out, flags)
+      ) => writer.writeTo(index, value.toList, out, flags)
     }
 
   implicit def seqWriter[A](implicit writer: PBFieldWriter[List[A]]): PBFieldWriter[Seq[A]] =

@@ -55,28 +55,20 @@ trait PBFieldReaderImplicits {
   implicit def optionalFieldReader[A](
       implicit reader: PBFieldReader[List[A]]
   ): PBFieldReader[Option[A]] =
-    instance { (index: Int, bytes: Array[Byte]) =>
-      reader.read(index, bytes).lastOption
-    }
+    instance((index: Int, bytes: Array[Byte]) => reader.read(index, bytes).lastOption)
 
   implicit def mapFieldReader[K, V](
       implicit reader: PBFieldReader[List[(K, V)]]
   ): PBFieldReader[Map[K, V]] =
-    instance { (index: Int, bytes: Array[Byte]) =>
-      reader.read(index, bytes).toMap
-    }
+    instance((index: Int, bytes: Array[Byte]) => reader.read(index, bytes).toMap)
 
   implicit def collectionMapFieldReader[K, V](
       implicit reader: PBFieldReader[List[(K, V)]]
   ): PBFieldReader[collection.Map[K, V]] =
-    instance { (index: Int, bytes: Array[Byte]) =>
-      reader.read(index, bytes).toMap
-    }
+    instance((index: Int, bytes: Array[Byte]) => reader.read(index, bytes).toMap)
 
   implicit def seqFieldReader[A](implicit reader: PBFieldReader[List[A]]): PBFieldReader[Seq[A]] =
-    instance { (index: Int, bytes: Array[Byte]) =>
-      reader.read(index, bytes)
-    }
+    instance((index: Int, bytes: Array[Byte]) => reader.read(index, bytes))
 
 }
 

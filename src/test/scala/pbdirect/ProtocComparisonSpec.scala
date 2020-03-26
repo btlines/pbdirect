@@ -85,6 +85,17 @@ class ProtocComparisonSpec extends AnyFlatSpec with Checkers {
 
 object ProtocComparisonSpec {
 
+  import enumeratum.values._
+  sealed abstract class Weather(val value: Int) extends IntEnumEntry
+  object Weather extends IntEnum[Weather] {
+    case object SUNNY  extends Weather(0)
+    case object CLOUDY extends Weather(1)
+    case object RAINY  extends Weather(2)
+
+    val values = findValues
+  }
+  implicit val arbWeather: Arbitrary[Weather] = Arbitrary(Gen.oneOf(Weather.values))
+
   case class MessageOne(
       dbl: Double,
       boolean: Boolean
@@ -109,7 +120,8 @@ object ProtocComparisonSpec {
       @pbIndex(10) messageOneOption: Option[MessageOne],
       @pbIndex(11) messageTwo: MessageTwo,
       @pbIndex(12) intMessageTwoMap: Map[Int, MessageTwo],
-      @pbIndex(13) signedIntFixedLongMap: Map[Int @@ Signed, Long @@ Fixed]
+      @pbIndex(13) signedIntFixedLongMap: Map[Int @@ Signed, Long @@ Fixed],
+      @pbIndex(14) weather: Weather
   )
 
   object TextFormatEncoding {
@@ -230,6 +242,7 @@ object ProtocComparisonSpec {
           |messageTwo: ${embeddedMessageTwo(m.messageTwo)}
           |${intMessageTwoMap(m.intMessageTwoMap)}
           |${signedIntFixedLongMap(m.signedIntFixedLongMap)}
+          |weather: ${m.weather.enumEntry}
           |""".stripMargin
     }
 

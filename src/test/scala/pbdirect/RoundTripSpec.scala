@@ -131,9 +131,7 @@ trait PBEquivalenceImplicits_2 {
       override def show: String                 = description
     }
 
-  implicit def refl[A]: PBEquivalence[A] = instance("refl") { (a1, a2) =>
-    a1 == a2
-  }
+  implicit def refl[A]: PBEquivalence[A] = instance("refl")((a1, a2) => a1 == a2)
 
 }
 
@@ -141,9 +139,7 @@ trait PBEquivalenceImplicits_1 extends PBEquivalenceImplicits_2 {
 
   // special treatment for arrays because == doesn't work (it uses reference equality)
   implicit def array[A](implicit listEquiv: PBEquivalence[List[A]]): PBEquivalence[Array[A]] =
-    instance("array") { (a1, a2) =>
-      listEquiv.equiv(a1.toList, a2.toList)
-    }
+    instance("array")((a1, a2) => listEquiv.equiv(a1.toList, a2.toList))
 
   def option[A](description: String, defaultValue: A)(
       implicit equiv: PBEquivalence[A]
