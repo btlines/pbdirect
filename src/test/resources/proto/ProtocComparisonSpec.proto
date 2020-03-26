@@ -36,4 +36,5 @@ message MessageThree {
   map<int32, MessageTwo> intMessageTwoMap = 12;
   map<sint32, fixed64> signedIntFixedLongMap = 13;
   Weather weather = 14;
+  repeated Weather weathers = 15;
 }

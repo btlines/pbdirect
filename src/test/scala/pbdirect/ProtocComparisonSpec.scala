@@ -121,7 +121,8 @@ object ProtocComparisonSpec {
       @pbIndex(11) messageTwo: MessageTwo,
       @pbIndex(12) intMessageTwoMap: Map[Int, MessageTwo],
       @pbIndex(13) signedIntFixedLongMap: Map[Int @@ Signed, Long @@ Fixed],
-      @pbIndex(14) weather: Weather
+      @pbIndex(14) weather: Weather,
+      @pbIndex(15) weathers: List[Weather]
   )
 
   object TextFormatEncoding {
@@ -243,6 +244,7 @@ object ProtocComparisonSpec {
           |${intMessageTwoMap(m.intMessageTwoMap)}
           |${signedIntFixedLongMap(m.signedIntFixedLongMap)}
           |weather: ${m.weather.enumEntry}
+          |weathers: [${m.weathers.map(_.enumEntry).mkString(", ")}]
           |""".stripMargin
     }
 
