@@ -78,7 +78,8 @@ object ProjectPlugin extends AutoPlugin {
         (test in Test).asRunnableItemFull
       ),
       orgMaintainersSetting := List(
-        Dev("developer47deg", Some("47 Degrees (twitter: @47deg)"), Some("hello@47deg.com"))),
+        Dev("developer47deg", Some("47 Degrees (twitter: @47deg)"), Some("hello@47deg.com"))
+      ),
       // format: OFF
       orgBadgeListSetting := List(
         TravisBadge.apply,
