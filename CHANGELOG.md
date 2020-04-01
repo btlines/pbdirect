@@ -118,16 +118,13 @@
 
 [Full Changelog](https://github.com/47degrees/pbdirect/compare/v0.2.0...v0.2.1)
 
-**Merged pull requests:**
-
-- Adds missing PGP settings [\#5](https://github.com/47degrees/pbdirect/pull/5) ([juanpedromoreno](https://github.com/juanpedromoreno))
-
 ## [v0.2.0](https://github.com/47degrees/pbdirect/tree/v0.2.0) (2019-01-03)
 
 [Full Changelog](https://github.com/47degrees/pbdirect/compare/0.0.3...v0.2.0)
 
 **Merged pull requests:**
 
+- Adds missing PGP settings [\#5](https://github.com/47degrees/pbdirect/pull/5) ([juanpedromoreno](https://github.com/juanpedromoreno))
 - Release pbdirect 0.2.0 [\#4](https://github.com/47degrees/pbdirect/pull/4) ([juanpedromoreno](https://github.com/juanpedromoreno))
 - Adds Project Plugin [\#3](https://github.com/47degrees/pbdirect/pull/3) ([juanpedromoreno](https://github.com/juanpedromoreno))
 - pbdirect fork adoption [\#2](https://github.com/47degrees/pbdirect/pull/2) ([juanpedromoreno](https://github.com/juanpedromoreno))
