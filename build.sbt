@@ -5,3 +5,4 @@ lazy val pbdirect = project
   .settings(name := "pbdirect")
 
 addCommandAlias("ci-test", "scalafmtCheck; scalafmtSbtCheck; +test")
+addCommandAlias("ci-docs", "compile")
