@@ -1,17 +1,13 @@
 import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport._
+import de.heikoseeberger.sbtheader.CommentStyle
 import sbt.Keys._
 import sbt._
-import sbtorgpolicies.OrgPoliciesPlugin
-import sbtorgpolicies.OrgPoliciesPlugin.autoImport._
-import sbtorgpolicies.model._
-import sbtorgpolicies.templates._
-import sbtorgpolicies.templates.badges._
-import sbtorgpolicies.runnable.syntax._
 import scala.language.reflectiveCalls
+import com.alejandrohdezma.sbt.github.SbtGithubPlugin
 
 object ProjectPlugin extends AutoPlugin {
 
-  override def requires: Plugins = OrgPoliciesPlugin
+  override def requires: Plugins = SbtGithubPlugin
 
   override def trigger: PluginTrigger = allRequirements
 
@@ -20,7 +16,7 @@ object ProjectPlugin extends AutoPlugin {
     lazy val V = new {
       val cats: String                = "2.1.1"
       val protobuf: String            = "3.11.4"
-      val scala212: String            = "2.12.10"
+      val scala212: String            = "2.12.11"
       val scala213: String            = "2.13.1"
       val shapeless: String           = "2.3.3"
       val enumeratum: String          = "1.5.15"
@@ -33,34 +29,13 @@ object ProjectPlugin extends AutoPlugin {
 
   import autoImport._
 
-  case class FixedCodecovBadge(info: BadgeInformation) extends Badge(info) {
-
-    override def badgeIcon: Option[BadgeIcon] =
-      BadgeIcon(
-        title = "codecov.io",
-        icon = s"http://codecov.io/gh/${info.owner}/${info.repo}/branch/master/graph/badge.svg",
-        url = s"http://codecov.io/gh/${info.owner}/${info.repo}"
-      ).some
-  }
-
   override def projectSettings: Seq[Def.Setting[_]] =
-    // TODO re-add `warnUnusedImport` after upgrading sbt-org-policies
-    sharedReleaseProcess ++ Seq(
-      orgProjectName := "pbdirect",
-      orgGithubSetting := GitHubSettings(
-        organization = "47degrees",
-        project = (name in LocalRootProject).value,
-        organizationName = "47 Degrees",
-        groupId = "com.47deg",
-        organizationHomePage = url("http://47deg.com"),
-        organizationEmail = "hello@47deg.com"
-      ),
-      orgLicenseSetting := MITLicense,
+    Seq(
+      organization := "com.47deg",
+      crossScalaVersions := Seq(V.scala212, V.scala213),
       // disable license headers on source files because it's too complicated, owing to us forking the project
       headerLicense := Some(HeaderLicense.Custom("")),
-      headerMappings := headerMappings.value + (HeaderFileType.scala -> HeaderCommentStyle.CppStyleLineComment),
-      startYear := Some(2019),
-      scalaVersion := V.scala212,
+      headerMappings := headerMappings.value + (HeaderFileType.scala -> HeaderCommentStyle.cppStyleLineComment),
       crossScalaVersions := Seq(scalaVersion.value, V.scala213),
       libraryDependencies ++= Seq(
         "com.chuusai"                %% "shapeless"                 % V.shapeless,
@@ -72,33 +47,7 @@ object ProjectPlugin extends AutoPlugin {
         "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % V.scalacheckShapeless % Test,
         "com.github.os72"            % "protoc-jar"                 % V.protocJar % Test
       ),
-      orgScriptTaskListSetting := List(
-        (clean in Global).asRunnableItemFull,
-        (compile in Compile).asRunnableItemFull,
-        (test in Test).asRunnableItemFull
-      ),
-      orgMaintainersSetting := List(
-        Dev("developer47deg", Some("47 Degrees (twitter: @47deg)"), Some("hello@47deg.com"))
-      ),
-      // format: OFF
-      orgBadgeListSetting := List(
-        TravisBadge.apply,
-        CodecovBadge.apply, { info => MavenCentralBadge.apply(info.copy(libName = "pbdirect")) },
-        ScalaLangBadge.apply,
-        LicenseBadge.apply, { info => GitterBadge.apply(info.copy(owner = "47deg", repo = "pbdirect")) },
-        GitHubIssuesBadge.apply
-      ),
-      orgEnforcedFilesSetting := List(
-        ContributingFileType(orgProjectName.value, orgGithubSetting.value.copy(organization = "47degrees", project = "pbdirect")),
-        AuthorsFileType(name.value, orgGithubSetting.value, orgMaintainersSetting.value, orgContributorsSetting.value),
-        NoticeFileType(orgProjectName.value, orgGithubSetting.value, orgLicenseSetting.value, startYear.value),
-        VersionSbtFileType,
-        ChangelogFileType,
-        ReadmeFileType(orgProjectName.value, orgGithubSetting.value, startYear.value, orgLicenseSetting.value, orgCommitBranchSetting.value, sbtPlugin.value, name.value, version.value, scalaBinaryVersion.value, sbtBinaryVersion.value, orgSupportedScalaJSVersion.value, orgBadgeListSetting.value),
-        ScalafmtFileType,
-        TravisFileType(crossScalaVersions.value, orgScriptCICommandKey, orgAfterCISuccessCommandKey)
-        // format: ON
-      ),
+      Compile / scalacOptions -= "-Xfatal-warnings",
       Compile / console / scalacOptions -= "-Xlint"
     )
 }

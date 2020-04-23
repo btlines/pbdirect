@@ -13,6 +13,10 @@ object Enum {
 
   object Values {
     implicit def values[A, Repr <: Coproduct](
+        /*
+         * scalac will (correctly) warn you that this parameter is never used,
+         * but don't delete it! It's required to avoid diverging implicit expansion.
+         */
         implicit gen: Generic.Aux[A, Repr],
         v: Aux[A, Repr]
     ): Values[A] =

@@ -20,7 +20,7 @@ trait PBMessageReaderImplicits {
       case (Some(annotation), _) => FieldIndex(annotation.first :: annotation.more.toList)
     }
     implicit def unannotatedCase[N <: Nat](implicit toInt: ToInt[N]) = at[(None.type, N)] {
-      case (None, n) => FieldIndex(List(toInt() + 1))
+      case (None, _) => FieldIndex(List(toInt() + 1))
     }
   }
 

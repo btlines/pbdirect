@@ -19,18 +19,18 @@ trait PBMessageWriterImplicits {
 
   object zipWithFieldIndex extends Poly2 {
     implicit def annotatedCase[T, N <: Nat] = at[Some[pbIndex], (T, N)] {
-      case (Some(annotation), (value, n)) =>
+      case (Some(annotation), (value, _)) =>
         (FieldIndex(annotation.first :: annotation.more.toList), value)
     }
     implicit def unannotatedCase[T, N <: Nat](implicit toInt: ToInt[N]) = at[None.type, (T, N)] {
-      case (None, (value, n)) =>
+      case (None, (value, _)) =>
         (FieldIndex(List(toInt() + 1)), value)
     }
   }
 
   object zipWithModifiers extends Poly2 {
     implicit def annotatedCase[A] = at[(FieldIndex, A), Some[pbUnpacked]] {
-      case ((fieldIndex, value), Some(annotation)) =>
+      case ((fieldIndex, value), Some(_)) =>
         (fieldIndex, value, FieldModifiers(unpacked = true))
     }
     implicit def unannotatedCase[A] = at[(FieldIndex, A), None.type] {
