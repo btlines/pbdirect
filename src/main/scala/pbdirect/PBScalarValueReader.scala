@@ -144,6 +144,7 @@ trait PBScalarValueReaderImplicits extends PBScalarValueReaderImplicits_1 {
       override def read(input: CodedInputStream): Array[Byte] = input.readByteArray()
     }
 
+  @deprecated("Please use an enumeratum IntEnum instead", since = "0.5.2")
   implicit def enumReader[A](
       implicit
       values: Enum.Values[A],
