@@ -242,6 +242,7 @@ trait PBScalarValueWriterImplicits extends LowPriorityPBScalarValueWriterImplici
       }
     }
 
+  @deprecated("Please use an enumeratum IntEnum instead", since = "0.5.2")
   implicit def enumWriter[E](
       implicit values: Enum.Values[E],
       ordering: Ordering[E]

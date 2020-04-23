@@ -2,6 +2,7 @@ package pbdirect
 
 import shapeless.{:+:, CNil, Coproduct, Generic, Witness}
 
+@deprecated("Please use an enumeratum IntEnum instead", since = "0.5.2")
 object Enum {
   def values[T](implicit v: Values[T], ord: Ordering[T]): Seq[T]         = v.apply.sorted
   def fromInt[T](index: Int)(implicit v: Values[T], ord: Ordering[T]): T = values.apply(index)

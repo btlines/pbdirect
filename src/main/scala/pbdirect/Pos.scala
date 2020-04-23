@@ -1,5 +1,6 @@
 package pbdirect
 
+@deprecated("Please use an enumeratum IntEnum instead", since = "0.5.2")
 trait Pos {
   val _pos: Int
 }
