@@ -14,8 +14,7 @@ trait PBOneofFieldReaderImplicits {
 
   implicit val cnilReader: PBOneofFieldReader[CNil] = instance((_, _) => None)
 
-  implicit def cconsReader[H, T <: Coproduct](
-      implicit
+  implicit def cconsReader[H, T <: Coproduct](implicit
       headReader: PBFieldReader[Option[H]],
       tailReader: Lazy[PBOneofFieldReader[T]]
   ): PBOneofFieldReader[H :+: T] =

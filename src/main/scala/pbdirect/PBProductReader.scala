@@ -17,8 +17,7 @@ trait PBProductReaderImplicits {
     (_: HNil, _: Array[Byte]) => HNil
   }
 
-  implicit def hconsProductReader[H, T <: HList, IT <: HList](
-      implicit
+  implicit def hconsProductReader[H, T <: HList, IT <: HList](implicit
       head: PBFieldReader[H],
       tail: Lazy[PBProductReader[T, IT]]
   ): PBProductReader[H :: T, FieldIndex :: IT] =
@@ -26,8 +25,7 @@ trait PBProductReaderImplicits {
       head.read(indices.head.values.head, bytes) :: tail.value.read(indices.tail, bytes)
     }
 
-  implicit def hconsCoproductOneofProductReader[H <: Coproduct, T <: HList, IT <: HList](
-      implicit
+  implicit def hconsCoproductOneofProductReader[H <: Coproduct, T <: HList, IT <: HList](implicit
       head: PBOneofFieldReader[H],
       tail: Lazy[PBProductReader[T, IT]]
   ): PBProductReader[Option[H] :: T, FieldIndex :: IT] =
@@ -36,8 +34,7 @@ trait PBProductReaderImplicits {
     }
 
   // read an Either[A, B] by treating it as a Coproduct (Left[A, B] :+: Right[A, B] :+: CNil)
-  implicit def hconsEitherOneofProductReader[A, B, H <: Coproduct, T <: HList, IT <: HList](
-      implicit
+  implicit def hconsEitherOneofProductReader[A, B, H <: Coproduct, T <: HList, IT <: HList](implicit
       gen: Generic.Aux[Either[A, B], H],
       productReader: PBProductReader[Option[H] :: T, FieldIndex :: IT]
   ): PBProductReader[Option[Either[A, B]] :: T, FieldIndex :: IT] =

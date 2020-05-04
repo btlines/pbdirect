@@ -40,12 +40,12 @@ object ProjectPlugin extends AutoPlugin {
       libraryDependencies ++= Seq(
         "com.chuusai"                %% "shapeless"                 % V.shapeless,
         "org.typelevel"              %% "cats-core"                 % V.cats,
-        "com.google.protobuf"        % "protobuf-java"              % V.protobuf,
+        "com.google.protobuf"         % "protobuf-java"             % V.protobuf,
         "com.beachape"               %% "enumeratum"                % V.enumeratum,
-        "org.scalatest"              %% "scalatest"                 % V.scalaTest % Test,
+        "org.scalatest"              %% "scalatest"                 % V.scalaTest           % Test,
         "org.scalatestplus"          %% "scalacheck-1-14"           % V.scalatestScalacheck % Test,
         "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % V.scalacheckShapeless % Test,
-        "com.github.os72"            % "protoc-jar"                 % V.protocJar % Test
+        "com.github.os72"             % "protoc-jar"                % V.protocJar           % Test
       ),
       Compile / scalacOptions -= "-Xfatal-warnings",
       Compile / console / scalacOptions -= "-Xlint"

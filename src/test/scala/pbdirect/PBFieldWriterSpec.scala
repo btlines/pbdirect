@@ -10,8 +10,8 @@ import shapeless.tag._
 
 class PBFieldWriterSpec extends AnyWordSpecLike with Matchers {
 
-  def write[A](value: A, flags: Flags = Flags(skipDefaultValue = true, unpacked = false))(
-      implicit writer: PBFieldWriter[A]
+  def write[A](value: A, flags: Flags = Flags(skipDefaultValue = true, unpacked = false))(implicit
+      writer: PBFieldWriter[A]
   ): Array[Byte] = {
     val buffer = new ByteArrayOutputStream()
     val out    = CodedOutputStream.newInstance(buffer)

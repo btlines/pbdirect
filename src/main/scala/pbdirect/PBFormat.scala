@@ -17,8 +17,8 @@ trait PBFormatImplicits {
 }
 
 object PBFormat extends PBFormatImplicits {
-  def apply[A](
-      implicit reader: PBScalarValueReader[A],
+  def apply[A](implicit
+      reader: PBScalarValueReader[A],
       writer: PBScalarValueWriter[A]
   ): PBFormat[A] =
     new PBFormat[A] {

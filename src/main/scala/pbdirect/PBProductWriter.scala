@@ -18,8 +18,8 @@ trait PBProductWriterImplicits {
     ()
   }
 
-  implicit def hconsWriter[H, T <: HList](
-      implicit head: PBFieldWriter[H],
+  implicit def hconsWriter[H, T <: HList](implicit
+      head: PBFieldWriter[H],
       tail: Lazy[PBProductWriter[T]]
   ): PBProductWriter[(FieldIndex, H, FieldModifiers) :: T] =
     instance { (indexedValues: (FieldIndex, H, FieldModifiers) :: T, out: CodedOutputStream) =>
@@ -31,8 +31,8 @@ trait PBProductWriterImplicits {
       tail.value.writeTo(indexedValues.tail, out)
     }
 
-  implicit def hconsCoproductOneofWriter[H <: Coproduct, T <: HList](
-      implicit head: PBOneofFieldWriter[H],
+  implicit def hconsCoproductOneofWriter[H <: Coproduct, T <: HList](implicit
+      head: PBOneofFieldWriter[H],
       tail: Lazy[PBProductWriter[T]]
   ): PBProductWriter[(FieldIndex, Option[H], FieldModifiers) :: T] =
     instance {
@@ -48,8 +48,8 @@ trait PBProductWriterImplicits {
     }
 
   // write an Either[A, B] by treating it as a Coproduct (Left[A, B] :+: Right[A, B] :+: CNil)
-  implicit def hconsEitherOneofWriter[A, B, H <: Coproduct, T <: HList](
-      implicit gen: Generic.Aux[Either[A, B], H],
+  implicit def hconsEitherOneofWriter[A, B, H <: Coproduct, T <: HList](implicit
+      gen: Generic.Aux[Either[A, B], H],
       productWriter: PBProductWriter[(FieldIndex, Option[H], FieldModifiers) :: T]
   ): PBProductWriter[(FieldIndex, Option[Either[A, B]], FieldModifiers) :: T] =
     instance {

@@ -141,8 +141,8 @@ trait PBEquivalenceImplicits_1 extends PBEquivalenceImplicits_2 {
   implicit def array[A](implicit listEquiv: PBEquivalence[List[A]]): PBEquivalence[Array[A]] =
     instance("array")((a1, a2) => listEquiv.equiv(a1.toList, a2.toList))
 
-  def option[A](description: String, defaultValue: A)(
-      implicit equiv: PBEquivalence[A]
+  def option[A](description: String, defaultValue: A)(implicit
+      equiv: PBEquivalence[A]
   ): PBEquivalence[Option[A]] =
     instance(description) {
       case (Some(x), None) if equiv.equiv(x, defaultValue) => true
@@ -166,14 +166,15 @@ trait PBEquivalenceImplicits_1 extends PBEquivalenceImplicits_2 {
   implicit val enumOption: PBEquivalence[Option[Status]] =
     option("enumOption", Status.withValue(0))
 
-  implicit def either[A, B](
-      implicit aEquiv: PBEquivalence[A],
+  implicit def either[A, B](implicit
+      aEquiv: PBEquivalence[A],
       bEquiv: PBEquivalence[B]
-  ): PBEquivalence[Either[A, B]] = instance("either") {
-    case (Left(a1), Left(a2))   => aEquiv.equiv(a1, a2)
-    case (Right(b1), Right(b2)) => bEquiv.equiv(b1, b2)
-    case _                      => false
-  }
+  ): PBEquivalence[Either[A, B]] =
+    instance("either") {
+      case (Left(a1), Left(a2))   => aEquiv.equiv(a1, a2)
+      case (Right(b1), Right(b2)) => bEquiv.equiv(b1, b2)
+      case _                      => false
+    }
 
   object fieldEquivalence extends Poly2 {
     implicit def defaultCase[A](implicit equiv: PBEquivalence[A]): Case.Aux[A, A, Boolean] =
@@ -188,8 +189,7 @@ trait PBEquivalenceImplicits_1 extends PBEquivalenceImplicits_2 {
   implicit val hnil: PBEquivalence[HNil] = instance("hnil")((_, _) => true)
 
   // two messages of type A are equivalent if all their fields are equivalent
-  implicit def message[A, R <: HList, FEs <: HList](
-      implicit
+  implicit def message[A, R <: HList, FEs <: HList](implicit
       gen: Generic.Aux[A, R],
       fieldEquivs: ZipWith.Aux[R, R, fieldEquivalence.type, FEs],
       fold: LeftFolder.Aux[FEs, Boolean, conj.type, Boolean]

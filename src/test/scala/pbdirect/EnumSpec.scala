@@ -17,7 +17,9 @@ class EnumSpec extends AnyWordSpecLike with Matchers {
   "Enum" should {
     "list values in declared order" in {
       Enum
-        .values[WeekDay] shouldBe Monday :: Tuesday :: Wednesday :: Thursday :: Friday :: Saturday :: Sunday :: Nil
+        .values[
+          WeekDay
+        ] shouldBe Monday :: Tuesday :: Wednesday :: Thursday :: Friday :: Saturday :: Sunday :: Nil
     }
     "get correct position for a value" in {
       Enum.toInt[WeekDay](Monday) shouldBe 0

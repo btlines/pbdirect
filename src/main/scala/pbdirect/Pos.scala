@@ -6,9 +6,10 @@ trait Pos {
 }
 
 object Pos {
-  implicit def posOrdering[P <: Pos]: Ordering[P] = new Ordering[P] {
-    override def compare(x: P, y: P): Int = x._pos - y._pos
-  }
+  implicit def posOrdering[P <: Pos]: Ordering[P] =
+    new Ordering[P] {
+      override def compare(x: P, y: P): Int = x._pos - y._pos
+    }
 
   trait _0  extends Pos { override val _pos = 0  }
   trait _1  extends Pos { override val _pos = 1  }

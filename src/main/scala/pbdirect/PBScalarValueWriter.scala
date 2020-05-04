@@ -61,8 +61,8 @@ trait PBScalarValueWriter[A] {
 
 trait LowPriorityPBScalarValueWriterImplicits {
 
-  implicit def embeddedMessageWriter[A](
-      implicit messageWriter: PBMessageWriter[A]
+  implicit def embeddedMessageWriter[A](implicit
+      messageWriter: PBMessageWriter[A]
   ): PBScalarValueWriter[A] =
     new PBScalarValueWriter[A] {
       override def wireType: Int                  = WIRETYPE_LENGTH_DELIMITED
@@ -222,8 +222,8 @@ trait PBScalarValueWriterImplicits extends LowPriorityPBScalarValueWriterImplici
         out.writeByteArrayNoTag(value)
     }
 
-  implicit def keyValuePairWriter[K, V](
-      implicit keyWriter: PBScalarValueWriter[K],
+  implicit def keyValuePairWriter[K, V](implicit
+      keyWriter: PBScalarValueWriter[K],
       valueWriter: PBScalarValueWriter[V]
   ): PBScalarValueWriter[(K, V)] =
     new PBScalarValueWriter[(K, V)] {
@@ -243,8 +243,8 @@ trait PBScalarValueWriterImplicits extends LowPriorityPBScalarValueWriterImplici
     }
 
   @deprecated("Please use an enumeratum IntEnum instead", since = "0.5.2")
-  implicit def enumWriter[E](
-      implicit values: Enum.Values[E],
+  implicit def enumWriter[E](implicit
+      values: Enum.Values[E],
       ordering: Ordering[E]
   ): PBScalarValueWriter[E] =
     new PBScalarValueWriter[E] {
@@ -270,13 +270,13 @@ trait PBScalarValueWriterImplicits extends LowPriorityPBScalarValueWriterImplici
         out.writeInt32NoTag(entry.value)
     }
 
-  implicit def leftWriter[A, B](
-      implicit writer: PBScalarValueWriter[A]
+  implicit def leftWriter[A, B](implicit
+      writer: PBScalarValueWriter[A]
   ): PBScalarValueWriter[Left[A, B]] =
     writer.contramap(_.value)
 
-  implicit def rightWriter[A, B](
-      implicit writer: PBScalarValueWriter[B]
+  implicit def rightWriter[A, B](implicit
+      writer: PBScalarValueWriter[B]
   ): PBScalarValueWriter[Right[A, B]] =
     writer.contramap(_.value)
 

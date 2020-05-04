@@ -177,7 +177,7 @@ object ProtocComparisonSpec {
           |}""".stripMargin
 
     def bytes(xs: Array[Byte]): String =
-      xs.map(b => s"\\${(b.toInt & 0xFF).toOctalString}").mkString
+      xs.map(b => s"\\${(b.toInt & 0xff).toOctalString}").mkString
 
     def string(x: String): String = {
       val escaped = x

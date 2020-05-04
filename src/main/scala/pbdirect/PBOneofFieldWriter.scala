@@ -30,8 +30,7 @@ trait PBOneofFieldWriterImplicits {
   implicit val cnilWriter: PBOneofFieldWriter[CNil] =
     instance((_, _, _, _) => throw new IllegalStateException("Cannot write CNil"))
 
-  implicit def cconsWriter[H, T <: Coproduct](
-      implicit
+  implicit def cconsWriter[H, T <: Coproduct](implicit
       headWriter: PBFieldWriter[H],
       tailWriter: Lazy[PBOneofFieldWriter[T]]
   ): PBOneofFieldWriter[H :+: T] =

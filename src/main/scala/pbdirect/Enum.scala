@@ -18,7 +18,8 @@ object Enum {
          * scalac will (correctly) warn you that this parameter is never used,
          * but don't delete it! It's required to avoid diverging implicit expansion.
          */
-        implicit gen: Generic.Aux[A, Repr],
+        implicit
+        gen: Generic.Aux[A, Repr],
         v: Aux[A, Repr]
     ): Values[A] =
       new Values[A] { def apply = v.values }
@@ -29,8 +30,8 @@ object Enum {
 
     object Aux {
       implicit def cnilAux[E]: Aux[E, CNil] = new Aux[E, CNil] { def values = Nil }
-      implicit def cconsAux[E, V <: E, R <: Coproduct](
-          implicit l: Witness.Aux[V],
+      implicit def cconsAux[E, V <: E, R <: Coproduct](implicit
+          l: Witness.Aux[V],
           r: Aux[E, R]
       ): Aux[E, V :+: R] =
         new Aux[E, V :+: R] { def values = l.value :: r.values }

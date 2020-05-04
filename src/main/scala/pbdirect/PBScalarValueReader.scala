@@ -29,8 +29,8 @@ trait PBScalarValueReader[A] {
 
 trait PBScalarValueReaderImplicits_1 {
 
-  implicit def embeddedMessageReader[A](
-      implicit reader: PBMessageReader[A]
+  implicit def embeddedMessageReader[A](implicit
+      reader: PBMessageReader[A]
   ): PBScalarValueReader[A] =
     new PBScalarValueReader[A] {
       // To construct a default instance of the message
@@ -145,8 +145,7 @@ trait PBScalarValueReaderImplicits extends PBScalarValueReaderImplicits_1 {
     }
 
   @deprecated("Please use an enumeratum IntEnum instead", since = "0.5.2")
-  implicit def enumReader[A](
-      implicit
+  implicit def enumReader[A](implicit
       values: Enum.Values[A],
       ordering: Ordering[A],
       reader: PBScalarValueReader[Int]
@@ -157,8 +156,7 @@ trait PBScalarValueReaderImplicits extends PBScalarValueReaderImplicits_1 {
       def read(input: CodedInputStream): A = Enum.fromInt[A](reader.read(input))
     }
 
-  implicit def enumerationReader[E <: Enumeration](
-      implicit
+  implicit def enumerationReader[E <: Enumeration](implicit
       reader: PBScalarValueReader[Int],
       gen: Generic.Aux[E, HNil]
   ): PBScalarValueReader[E#Value] = {
@@ -170,8 +168,7 @@ trait PBScalarValueReaderImplicits extends PBScalarValueReaderImplicits_1 {
     }
   }
 
-  implicit def enumeratumIntEnumEntryReader[E <: IntEnumEntry](
-      implicit
+  implicit def enumeratumIntEnumEntryReader[E <: IntEnumEntry](implicit
       reader: PBScalarValueReader[Int],
       enum: IntEnum[E]
   ): PBScalarValueReader[E] =
@@ -181,8 +178,8 @@ trait PBScalarValueReaderImplicits extends PBScalarValueReaderImplicits_1 {
       def read(input: CodedInputStream): E = enum.withValue(reader.read(input))
     }
 
-  implicit def keyValuePairReader[K, V](
-      implicit keyReader: PBScalarValueReader[K],
+  implicit def keyValuePairReader[K, V](implicit
+      keyReader: PBScalarValueReader[K],
       valueReader: PBScalarValueReader[V]
   ): PBScalarValueReader[(K, V)] = {
     val defaultKey   = keyReader.defaultValue
@@ -203,13 +200,13 @@ trait PBScalarValueReaderImplicits extends PBScalarValueReaderImplicits_1 {
     }
   }
 
-  implicit def leftReader[A, B](
-      implicit reader: PBScalarValueReader[A]
+  implicit def leftReader[A, B](implicit
+      reader: PBScalarValueReader[A]
   ): PBScalarValueReader[Left[A, B]] =
     reader.map(Left(_))
 
-  implicit def rightReader[A, B](
-      implicit reader: PBScalarValueReader[B]
+  implicit def rightReader[A, B](implicit
+      reader: PBScalarValueReader[B]
   ): PBScalarValueReader[Right[A, B]] =
     reader.map(Right(_))
 

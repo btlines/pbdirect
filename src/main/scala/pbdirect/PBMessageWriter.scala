@@ -18,25 +18,29 @@ trait PBMessageWriterImplicits {
     }
 
   object zipWithFieldIndex extends Poly2 {
-    implicit def annotatedCase[T, N <: Nat] = at[Some[pbIndex], (T, N)] {
-      case (Some(annotation), (value, _)) =>
-        (FieldIndex(annotation.first :: annotation.more.toList), value)
-    }
-    implicit def unannotatedCase[T, N <: Nat](implicit toInt: ToInt[N]) = at[None.type, (T, N)] {
-      case (None, (value, _)) =>
-        (FieldIndex(List(toInt() + 1)), value)
-    }
+    implicit def annotatedCase[T, N <: Nat] =
+      at[Some[pbIndex], (T, N)] {
+        case (Some(annotation), (value, _)) =>
+          (FieldIndex(annotation.first :: annotation.more.toList), value)
+      }
+    implicit def unannotatedCase[T, N <: Nat](implicit toInt: ToInt[N]) =
+      at[None.type, (T, N)] {
+        case (None, (value, _)) =>
+          (FieldIndex(List(toInt() + 1)), value)
+      }
   }
 
   object zipWithModifiers extends Poly2 {
-    implicit def annotatedCase[A] = at[(FieldIndex, A), Some[pbUnpacked]] {
-      case ((fieldIndex, value), Some(_)) =>
-        (fieldIndex, value, FieldModifiers(unpacked = true))
-    }
-    implicit def unannotatedCase[A] = at[(FieldIndex, A), None.type] {
-      case ((fieldIndex, value), None) =>
-        (fieldIndex, value, FieldModifiers(unpacked = false))
-    }
+    implicit def annotatedCase[A] =
+      at[(FieldIndex, A), Some[pbUnpacked]] {
+        case ((fieldIndex, value), Some(_)) =>
+          (fieldIndex, value, FieldModifiers(unpacked = true))
+      }
+    implicit def unannotatedCase[A] =
+      at[(FieldIndex, A), None.type] {
+        case ((fieldIndex, value), None) =>
+          (fieldIndex, value, FieldModifiers(unpacked = false))
+      }
   }
 
   implicit def prodWriter[
@@ -47,8 +51,8 @@ trait PBMessageWriterImplicits {
       ZWI <: HList,
       ZWFI <: HList,
       ZWM <: HList
-  ](
-      implicit gen: Generic.Aux[A, R],
+  ](implicit
+      gen: Generic.Aux[A, R],
       indexAnns: Annotations.Aux[pbIndex, A, IA],
       unpackedAnns: Annotations.Aux[pbUnpacked, A, UA],
       zwi: ZipWithIndex.Aux[R, ZWI],
