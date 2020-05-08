@@ -1,11 +1,20 @@
 # Changelog
 
-## [Unreleased](https://github.com/47degrees/pbdirect/tree/HEAD)
+## [v0.5.2](https://github.com/47degrees/pbdirect/tree/v0.5.2) (2020-05-08)
 
-[Full Changelog](https://github.com/47degrees/pbdirect/compare/v0.5.1...HEAD)
+[Full Changelog](https://github.com/47degrees/pbdirect/compare/v0.5.1...v0.5.2)
+
+📈 **Dependency updates**
+
+- Update enumeratum to 1.6.0 [\#86](https://github.com/47degrees/pbdirect/pull/86) ([scala-steward](https://github.com/scala-steward))
+- Update sbt-ci-release to 1.5.3 [\#83](https://github.com/47degrees/pbdirect/pull/83) ([scala-steward](https://github.com/scala-steward))
 
 **Merged pull requests:**
 
+- Bumps plugins [\#89](https://github.com/47degrees/pbdirect/pull/89) ([fedefernandez](https://github.com/fedefernandez))
+- Update scalafmt-core to 2.5.1 [\#88](https://github.com/47degrees/pbdirect/pull/88) ([BenFradet](https://github.com/BenFradet))
+- Deprecate Enum [\#85](https://github.com/47degrees/pbdirect/pull/85) ([cb372](https://github.com/cb372))
+- Upgrades Build [\#84](https://github.com/47degrees/pbdirect/pull/84) ([juanpedromoreno](https://github.com/juanpedromoreno))
 - Add enum fields to the protoc comparison test [\#66](https://github.com/47degrees/pbdirect/pull/66) ([cb372](https://github.com/cb372))
 - Update sbt-org-policies to 0.13.3 [\#65](https://github.com/47degrees/pbdirect/pull/65) ([scala-steward](https://github.com/scala-steward))
 - Mergify: configuration update [\#64](https://github.com/47degrees/pbdirect/pull/64) ([juanpedromoreno](https://github.com/juanpedromoreno))
@@ -33,6 +42,7 @@
 **Merged pull requests:**
 
 - Fixes openssl command [\#54](https://github.com/47degrees/pbdirect/pull/54) ([juanpedromoreno](https://github.com/juanpedromoreno))
+- Update scalacheck-1-14 to 3.1.1.0 [\#52](https://github.com/47degrees/pbdirect/pull/52) ([scala-steward](https://github.com/scala-steward))
 - Update scalatest to 3.1.1 [\#51](https://github.com/47degrees/pbdirect/pull/51) ([scala-steward](https://github.com/scala-steward))
 - Releases 0.5.0 [\#49](https://github.com/47degrees/pbdirect/pull/49) ([juanpedromoreno](https://github.com/juanpedromoreno))
 - Update scalafmt-core to 2.4.1 [\#48](https://github.com/47degrees/pbdirect/pull/48) ([scala-steward](https://github.com/scala-steward))
@@ -43,7 +53,6 @@
 - Update protobuf-java to 3.11.3 [\#43](https://github.com/47degrees/pbdirect/pull/43) ([scala-steward](https://github.com/scala-steward))
 - Update cats-core to 2.1.0 [\#42](https://github.com/47degrees/pbdirect/pull/42) ([scala-steward](https://github.com/scala-steward))
 - Cross build for 2.13 and drop 2.11 [\#41](https://github.com/47degrees/pbdirect/pull/41) ([cb372](https://github.com/cb372))
-- Update sbt-org-policies to 0.12.3 [\#40](https://github.com/47degrees/pbdirect/pull/40) ([scala-steward](https://github.com/scala-steward))
 - Update sbt to 1.3.7 [\#39](https://github.com/47degrees/pbdirect/pull/39) ([scala-steward](https://github.com/scala-steward))
 
 ## [v0.4.1](https://github.com/47degrees/pbdirect/tree/v0.4.1) (2020-01-13)
@@ -52,9 +61,11 @@
 
 **Merged pull requests:**
 
+- Update sbt-org-policies to 0.12.3 [\#40](https://github.com/47degrees/pbdirect/pull/40) ([scala-steward](https://github.com/scala-steward))
 - Release v0.4.1 [\#38](https://github.com/47degrees/pbdirect/pull/38) ([cb372](https://github.com/cb372))
 - Support signed/unsigned/fixed-width integers [\#37](https://github.com/47degrees/pbdirect/pull/37) ([cb372](https://github.com/cb372))
 - Support reading/writing of Eithers as oneof fields [\#36](https://github.com/47degrees/pbdirect/pull/36) ([cb372](https://github.com/cb372))
+- Update enumeratum to 1.5.15 [\#34](https://github.com/47degrees/pbdirect/pull/34) ([scala-steward](https://github.com/scala-steward))
 
 ## [v0.4.0](https://github.com/47degrees/pbdirect/tree/v0.4.0) (2020-01-02)
 
@@ -63,7 +74,6 @@
 **Merged pull requests:**
 
 - Release v0.4.0 [\#35](https://github.com/47degrees/pbdirect/pull/35) ([cb372](https://github.com/cb372))
-- Update enumeratum to 1.5.15 [\#34](https://github.com/47degrees/pbdirect/pull/34) ([scala-steward](https://github.com/scala-steward))
 - Fix flaky test [\#33](https://github.com/47degrees/pbdirect/pull/33) ([cb372](https://github.com/cb372))
 - Protoc comparison test [\#32](https://github.com/47degrees/pbdirect/pull/32) ([cb372](https://github.com/cb372))
 - Packed repeated fields [\#31](https://github.com/47degrees/pbdirect/pull/31) ([cb372](https://github.com/cb372))
