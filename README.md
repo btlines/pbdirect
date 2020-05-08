@@ -22,7 +22,7 @@ In order to use PBDirect you need to add the following lines to your `build.sbt`
 [comment]: # (Start Replace)
 
 ```scala
-libraryDependencies += "com.47deg" %% "pbdirect" % "0.5.1"
+libraryDependencies += "com.47deg" %% "pbdirect" % "0.5.2"
 ```
 
 [comment]: # (End Replace)
@@ -59,7 +59,7 @@ case class MyMessage(
 is equivalent to the following protobuf definition:
 
 ```protobuf
-message MyMessage {
+message MyMessage2 {
   int32  id              = 1;
   string text            = 3;
   repeated int32 numbers = 5;
@@ -70,7 +70,7 @@ Note that the `@pbIndex` annotation is optional. If it is not present, the field
 as its index. For example, an unannotated case class like:
 
 ```scala
-case class MyMessage(
+case class MyMessage2(
   id: Option[Int],
   text: Option[String],
   numbers: List[Int]
@@ -92,13 +92,30 @@ message MyMessage {
 You only need to call the `toPB` method on your case class. This method is implicitly added with `import pbdirect._`.
 
 ```scala
-val message = MyMessage(
+val message = MyMessage2(
   id = Some(123),
   text = Some("Hello"),
   numbers = List(1, 2, 3, 4)
 )
+// message: MyMessage2 = MyMessage2(Some(123), Some("Hello"), List(1, 2, 3, 4))
 val bytes = message.toPB
-// bytes: Array(8, 123, 26, 5, 72, 101, 108, 108, 111, 40, 1, 40, 2, 40, 3, 40, 4)
+// bytes: Array[Byte] = Array(
+//   8,
+//   123,
+//   18,
+//   5,
+//   72,
+//   101,
+//   108,
+//   108,
+//   111,
+//   26,
+//   4,
+//   1,
+//   2,
+//   3,
+//   4
+// )
 ```
 
 ### Deserialization
@@ -107,9 +124,32 @@ Deserializing bytes into a case class is also straight forward. You only need to
 This method is added implicitly on all `Array[Byte]` by importing `pbdirect._`.
 
 ```scala
-val bytes: Array[Byte] = Array[Byte](8, 123, 26, 5, 72, 101, 108, 108, 111, 40, 1, 40, 2, 40, 3, 40, 4)
-val message = bytes.pbTo[MyMessage]
-// message: MyMessage(Some(123),Some(hello),List(1, 2, 3, 4))
+val bytes2: Array[Byte] = Array[Byte](8, 123, 26, 5, 72, 101, 108, 108, 111, 40, 1, 40, 2, 40, 3, 40, 4)
+// bytes2: Array[Byte] = Array(
+//   8,
+//   123,
+//   26,
+//   5,
+//   72,
+//   101,
+//   108,
+//   108,
+//   111,
+//   40,
+//   1,
+//   40,
+//   2,
+//   40,
+//   3,
+//   40,
+//   4
+// )
+val message2 = bytes2.pbTo[MyMessage2]
+// message2: MyMessage2 = MyMessage2(
+//   Some(123),
+//   None,
+//   List(72, 101, 108, 108, 111)
+// )
 ```
 
 ## Extension
@@ -119,31 +159,31 @@ E.g. to add a format to write `java.time.Instant` you can do:
 
 ```scala
 import java.time.Instant
-import cats.syntax.invariant._
+import cats.implicits._
 
 implicit val instantFormat: PBFormat[Instant] =
-  PBFormat[Long].imap(Instant.ofEpochMilli)(_.toEpochMilli)
+  PBFormat[Long].imap(Instant.ofEpochMilli(_))(_.toEpochMilli)
+// instantFormat: PBFormat[Instant] = pbdirect.PBFormat$$anon$1@1153c99e
 ```
 
 If you only need a reader you can map over an existing `PBScalarValueReader`
 
 ```scala
 import java.time.Instant
-import cats.syntax.functor._
 
 implicit val instantReader: PBScalarValueReader[Instant] =
-  PBScalarValueReader[Long].map(Instant.ofEpochMilli)
+  PBScalarValueReader[Long].map(Instant.ofEpochMilli(_))
+// instantReader: PBScalarValueReader[Instant] = pbdirect.PBScalarValueReaderImplicits$FunctorReader$$anon$2@449a94d7
 ```
 
 And for a writer you simply contramap over it:
 
 ```scala
 import java.time.Instant
-import cats.syntax.contravariant._
 
 implicit val instantWriter: PBScalarValueWriter[Instant] =
   PBScalarValueWriter[Long].contramap(_.toEpochMilli)
-  )
+// instantWriter: PBScalarValueWriter[Instant] = pbdirect.PBScalarValueWriterImplicits$ContravariantWriter$$anon$2@29390fc4
 ```
 
 ## Oneof fields
@@ -153,7 +193,9 @@ pbdirect supports protobuf [`oneof` fields](https://developers.google.com/protoc
 For example:
 
 ```scala
-case class MyMessage(
+import shapeless._
+
+case class MyMessage3(
   @pbIndex(1) number: Int,
   @pbIndex(2,3,4) coproduct: Option[Int :+: String :+: Boolean :+: CNil]
 )
@@ -162,7 +204,7 @@ case class MyMessage(
 is equivalent to the following protobuf definition:
 
 ```protobuf
-message MyMessage {
+message MyMessage3 {
   int32 number = 1;
   oneof coproduct {
     int32 a  = 2;
@@ -175,7 +217,7 @@ message MyMessage {
 `oneof` fields with exactly two branches can also be encoded using `Either`. For example:
 
 ```scala
-case class MyMessage(
+case class MyMessage4(
   @pbIndex(1) number: Int,
   @pbIndex(2,3) either: Option[Either[String, Boolean]]
 )
@@ -184,7 +226,7 @@ case class MyMessage(
 is equivalent to:
 
 ```protobuf
-message MyMessage {
+message MyMessage4 {
   int32 number = 1;
   oneof either {
     string b = 2;
@@ -225,7 +267,7 @@ of the underlying type.
 For example, if your message looks like:
 
 ```scala
-case class MyMessage(instant: Instant)
+case class MyMessage5(instant: Instant)
 ```
 
 and you use the `instantReader` defined earlier, reading a message with the `instant` field missing would result in `1970-01-01T00:00:00Z`.
