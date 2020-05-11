@@ -19,8 +19,8 @@ The maintainers of the project are:
 
 These are the people that have contributed to the _pbdirect_ project:
 
-- [![cb372](https://avatars1.githubusercontent.com/u/106760?v=4&s=20) **cb372**](https://github.com/cb372)
 - [![47erbot](https://avatars1.githubusercontent.com/u/24799081?v=4&s=20) **47erbot**](https://github.com/47erbot)
+- [![cb372](https://avatars1.githubusercontent.com/u/106760?v=4&s=20) **cb372**](https://github.com/cb372)
 - [![btlines](https://avatars2.githubusercontent.com/u/25171883?v=4&s=20) **btlines**](https://github.com/btlines)
 - [![juanpedromoreno](https://avatars2.githubusercontent.com/u/4879373?v=4&s=20) **juanpedromoreno**](https://github.com/juanpedromoreno)
 - [![BenFradet](https://avatars2.githubusercontent.com/u/1737211?v=4&s=20) **BenFradet**](https://github.com/BenFradet)
