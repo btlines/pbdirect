@@ -15,7 +15,7 @@ object ProjectPlugin extends AutoPlugin {
 
     lazy val V = new {
       val cats: String                = "2.1.1"
-      val protobuf: String            = "3.12.0"
+      val protobuf: String            = "3.12.1"
       val scala212: String            = "2.12.11"
       val scala213: String            = "2.13.1"
       val shapeless: String           = "2.3.3"
