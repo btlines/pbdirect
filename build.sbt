@@ -4,6 +4,7 @@ ThisBuild / organization := "com.47deg"
 
 addCommandAlias("ci-test", "scalafmtCheckAll; scalafmtSbtCheck; mdoc; testCovered")
 addCommandAlias("ci-docs", "mdoc; headerCreateAll")
+addCommandAlias("ci-publish", "ci-release")
 
 lazy val pbdirect = project
   .settings(Compile / scalacOptions -= "-Xfatal-warnings")
