@@ -1,9 +1,5 @@
 
-[comment]: # (Start Badges)
-
 [![codecov.io](http://codecov.io/gh/47degrees/pbdirect/branch/master/graph/badge.svg)](http://codecov.io/gh/47degrees/pbdirect) [![Maven Central](https://img.shields.io/badge/maven%20central-0.5.1-green.svg)](https://oss.sonatype.org/#nexus-search;gav~com.47deg~pbdirect*) [![Latest version](https://img.shields.io/badge/pbdirect-0.5.1-green.svg)](https://index.scala-lang.org/47degrees/pbdirect) [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://raw.githubusercontent.com/47degrees/pbdirect/master/LICENSE) [![Join the chat at https://gitter.im/47deg/pbdirect](https://badges.gitter.im/47deg/pbdirect.svg)](https://gitter.im/47deg/pbdirect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![GitHub Issues](https://img.shields.io/github/issues/47degrees/pbdirect.svg)](https://github.com/47degrees/pbdirect/issues)
-
-[comment]: # (End Badges)
 
 # PBDirect
 
@@ -19,13 +15,9 @@ PBDirect aims just that: Make it easier to serialize/deserialize into Protobuf.
 
 In order to use PBDirect you need to add the following lines to your `build.sbt`:
 
-[comment]: # (Start Replace)
-
 ```scala
 libraryDependencies += "com.47deg" %% "pbdirect" % "0.5.2"
 ```
-
-[comment]: # (End Replace)
 
 ## Dependencies
 
@@ -337,11 +329,8 @@ case class AnotherIntsMessage(
 )
 ```
 
-[comment]: # (Start Copyright)
 # Copyright
 
 pbdirect is designed and developed by 47 Degrees
 
 Copyright (C) 2019-2020 47 Degrees. <http://47deg.com>
-
-[comment]: # (End Copyright)
