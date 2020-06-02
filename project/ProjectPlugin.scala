@@ -31,7 +31,6 @@ object ProjectPlugin extends AutoPlugin {
     Seq(
       organization := "com.47deg",
       crossScalaVersions := Seq(V.scala212, V.scala213),
-      crossScalaVersions := Seq(scalaVersion.value, V.scala213),
       libraryDependencies ++= Seq(
         "com.chuusai"                %% "shapeless"                 % V.shapeless,
         "org.typelevel"              %% "cats-core"                 % V.cats,
