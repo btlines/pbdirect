@@ -14,8 +14,6 @@ object ProjectPlugin extends AutoPlugin {
     lazy val V = new {
       val cats: String                = "2.1.1"
       val protobuf: String            = "3.12.2"
-      val scala212: String            = "2.12.11"
-      val scala213: String            = "2.13.1"
       val shapeless: String           = "2.3.3"
       val enumeratum: String          = "1.6.1"
       val scalaTest: String           = "3.1.2"
@@ -29,8 +27,6 @@ object ProjectPlugin extends AutoPlugin {
 
   override def projectSettings: Seq[Def.Setting[_]] =
     Seq(
-      organization := "com.47deg",
-      crossScalaVersions := Seq(V.scala212, V.scala213),
       libraryDependencies ++= Seq(
         "com.chuusai"                %% "shapeless"                 % V.shapeless,
         "org.typelevel"              %% "cats-core"                 % V.cats,
