@@ -2,10 +2,7 @@ ThisBuild / scalaVersion := "2.13.2"
 ThisBuild / crossScalaVersions := Seq("2.12.11", "2.13.2")
 ThisBuild / organization := "com.47deg"
 
-addCommandAlias(
-  "ci-test",
-  "scalafmtCheckAll; scalafmtSbtCheck; mdoc; +coverage; +test; +coverageReport; +coverageAggregate"
-)
+addCommandAlias("ci-test", "scalafmtCheckAll; scalafmtSbtCheck; mdoc; testCovered")
 addCommandAlias("ci-docs", "mdoc; headerCreateAll")
 
 lazy val pbdirect = project
