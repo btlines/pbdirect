@@ -1,5 +1,3 @@
-import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport._
-import de.heikoseeberger.sbtheader.CommentStyle
 import sbt.Keys._
 import sbt._
 import scala.language.reflectiveCalls
@@ -33,9 +31,6 @@ object ProjectPlugin extends AutoPlugin {
     Seq(
       organization := "com.47deg",
       crossScalaVersions := Seq(V.scala212, V.scala213),
-      // disable license headers on source files because it's too complicated, owing to us forking the project
-      headerLicense := Some(HeaderLicense.Custom("")),
-      headerMappings := headerMappings.value + (HeaderFileType.scala -> HeaderCommentStyle.cppStyleLineComment),
       crossScalaVersions := Seq(scalaVersion.value, V.scala213),
       libraryDependencies ++= Seq(
         "com.chuusai"                %% "shapeless"                 % V.shapeless,
