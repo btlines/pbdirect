@@ -4,9 +4,9 @@ ThisBuild / organization := "com.47deg"
 
 addCommandAlias(
   "ci-test",
-  "+scalafmtCheckAll; +scalafmtSbtCheck; documentation/mdoc; +coverage; +test; +coverageReport; +coverageAggregate"
+  "scalafmtCheckAll; scalafmtSbtCheck; mdoc; +coverage; +test; +coverageReport; +coverageAggregate"
 )
-addCommandAlias("ci-docs", "documentation/mdoc; headerCreateAll")
+addCommandAlias("ci-docs", "mdoc; headerCreateAll")
 
 lazy val pbdirect = project
 
