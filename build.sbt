@@ -4,18 +4,14 @@ ThisBuild / organization := "com.47deg"
 
 addCommandAlias(
   "ci-test",
-  "+scalafmtCheckAll; +scalafmtSbtCheck; project-docs/mdoc; +coverage; +test; +coverageReport; +coverageAggregate"
+  "+scalafmtCheckAll; +scalafmtSbtCheck; documentation/mdoc; +coverage; +test; +coverageReport; +coverageAggregate"
 )
-addCommandAlias("ci-docs", "project-docs/mdoc; headerCreateAll")
+addCommandAlias("ci-docs", "documentation/mdoc; headerCreateAll")
 
 lazy val pbdirect = project
-  .in(file("."))
-  .settings(name := "pbdirect")
 
-lazy val `project-docs` = (project in file(".docs"))
+lazy val documentation = project
   .dependsOn(pbdirect)
-  .settings(moduleName := "pbdirect-project-docs")
-  .settings(mdocIn := file(".docs"))
-  .settings(mdocOut := file("."))
   .settings(skip in publish := true)
   .enablePlugins(MdocPlugin)
+  .settings(mdocOut := file("."))
