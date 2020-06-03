@@ -25,8 +25,10 @@ import org.scalacheck.ScalacheckShapeless._
 import org.scalacheck.{Arbitrary, Gen, Prop}
 import org.scalacheck.Prop._
 import com.github.os72.protocjar._
+
 import scala.sys.process._
 import java.io._
+
 import shapeless._
 import shapeless.tag.@@
 
@@ -48,9 +50,9 @@ class ProtocComparisonSpec extends AnyFlatSpec with Checkers {
   implicit val fixedWidthLongArb: Arbitrary[Long @@ Fixed] =
     Arbitrary(Gen.posNum[Long].map(tag[Fixed](_)))
 
-  val protoc: File     = Protoc.extractProtoc(ProtocVersion.PROTOC_VERSION, true)
-  val workingDir: File = new File(".")
-  val protoFile: File  = new File("src/test/resources/proto/ProtocComparisonSpec.proto")
+  val protoc: File      = Protoc.extractProtoc(ProtocVersion.PROTOC_VERSION, true)
+  val workingDir: File  = new File(".")
+  val protoFile: String = getClass.getResource("/proto/ProtocComparisonSpec.proto").getPath
   val protocCommand =
     s"${protoc.getAbsolutePath} --proto_path=${workingDir.getAbsolutePath} --encode=MessageThree $protoFile"
 
