@@ -155,7 +155,6 @@ object RoundTripSpec {
  * - ∀ messages m1(x1, x2, ..., xN), m2(y1, y2, ..., yN).
  *     (∀ 1 ≦ n ≦ N. xn equiv yn) => m1 equiv m2
  *   (two messages are equivalent if all their fields are equivalent)
- *
  */
 trait PBEquivalence[A] {
   def equiv(a1: A, a2: A): Boolean

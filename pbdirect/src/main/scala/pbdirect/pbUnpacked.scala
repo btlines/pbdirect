@@ -55,6 +55,5 @@ package pbdirect
  * Unless annotated with @pbUnpacked, all primitive repeated fields
  * (ints, floats, booleans and enums) will be packed by default.
  * This is the standard proto3 behaviour.
- *
  */
 case class pbUnpacked() extends scala.annotation.Annotation
